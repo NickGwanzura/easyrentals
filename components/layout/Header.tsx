@@ -1,17 +1,16 @@
 'use client';
 
 import React from 'react';
-import { Bell, Search, Menu } from 'lucide-react';
+import { Bell, Search } from 'lucide-react';
 import { useAuth } from '@/lib/auth/context';
 import { cn } from '@/lib/utils';
 
 interface HeaderProps {
-  onMenuClick?: () => void;
   title?: string;
 }
 
-export default function Header({ onMenuClick, title }: HeaderProps) {
-  const { user, isDemoMode } = useAuth();
+export default function Header({ title }: HeaderProps) {
+  const { isDemoMode } = useAuth();
 
   return (
     <>
@@ -25,12 +24,6 @@ export default function Header({ onMenuClick, title }: HeaderProps) {
         isDemoMode ? "top-8 left-64" : "top-0 left-64"
       )}>
         <div className="flex items-center gap-4">
-          <button
-            onClick={onMenuClick}
-            className="lg:hidden p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
           {title && (
             <h1 className="text-xl font-semibold text-slate-900">{title}</h1>
           )}
