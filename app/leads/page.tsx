@@ -48,11 +48,7 @@ export default function LeadsPage() {
     return matchesSearch && matchesStatus;
   });
 
-  const getPropertyName = (propertyId?: string) => {
-    if (!propertyId) return 'General Inquiry';
-    const property = demoData.properties.find(p => p.id === propertyId);
-    return property ? property.title : 'Unknown Property';
-  };
+
 
   return (
     <DashboardLayout title="Leads">
@@ -131,7 +127,7 @@ export default function LeadsPage() {
         {/* Leads List */}
         <div className="space-y-4">
           {filteredLeads.map((lead) => (
-            <LeadCard key={lead.id} lead={lead} />
+            <LeadCard key={lead.id} lead={lead} getPropertyName={getPropertyName} />
           ))}
           
           {filteredLeads.length === 0 && (
@@ -146,6 +142,12 @@ export default function LeadsPage() {
     </DashboardLayout>
   );
 }
+
+const getPropertyName = (propertyId?: string) => {
+  if (!propertyId) return 'General Inquiry';
+  const property = demoData.properties.find(p => p.id === propertyId);
+  return property ? property.title : 'Unknown Property';
+};
 
 function LeadCard({ lead }: { lead: Lead }) {
   return (
