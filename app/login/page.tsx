@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff, Home, ArrowRight, User, Building2, Users } from 'lucide-react';
@@ -15,7 +15,8 @@ const demoAccounts = [
   { role: 'tenant', email: 'demo@tenant.com', icon: Users, label: 'Tenant', color: 'bg-warning-100 text-warning-700 border-warning-200' },
 ];
 
-export default function LoginPage() {
+// Component that uses useSearchParams wrapped in Suspense
+function LoginContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -207,8 +208,8 @@ export default function LoginPage() {
         <div className="absolute inset-0 flex items-center justify-center p-12">
           <div className="max-w-md text-white">
             <blockquote className="text-2xl font-medium leading-relaxed mb-6">
-              "EazyRentals has completely transformed how I manage my rental properties. 
-              The dashboard is intuitive and saves me hours every week."
+              &ldquo;EazyRentals has completely transformed how I manage my rental properties. 
+              The dashboard is intuitive and saves me hours every week.&rdquo;
             </blockquote>
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
@@ -223,5 +224,23 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Main page component with Suspense
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center mx-auto mb-4 animate-pulse">
+            <Home className="w-6 h-6 text-white" />
+          </div>
+          <p className="text-slate-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   );
 }

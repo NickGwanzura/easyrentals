@@ -177,3 +177,6 @@ export function useRequireAuth(allowedRoles?: UserRole[]) {
   
   return auth;
 }
+
+// Re-export hooks from hooks.ts for convenience
+export { useDashboardData, useProperties, useTenants, usePayments } from './hooks';
