@@ -1,6 +1,7 @@
 // ============================================================================
-// Estate Accounting Mock Data
+// Zimbabwe Estate Accounting Mock Data
 // 500 Levy Records | 50 Expenses | 10 Budgets
+// Currency: USD (commonly used in Zimbabwe)
 // ============================================================================
 
 import { 
@@ -8,32 +9,55 @@ import {
   EstateBudget, BudgetCategory, OwnerStatement, LevyArrear,
   ArrearsRiskLevel 
 } from '@/types/estate';
-import { DEMO_CREDENTIALS } from './index';
 
 // ============================================================================
-// Demo Estates
+// Zimbabwean Names
+// ============================================================================
+
+const zimbabweanFirstNames = [
+  'Tatenda', 'Tendai', 'Farai', 'Blessing', 'Memory', 'Precious', 'Beauty', 'Lovemore',
+  'Tawanda', 'Shingirai', 'Nyarai', 'Rumbidzai', 'Simbarashe', 'Tinotenda', 'Munashe',
+  'Tanaka', 'Anesu', 'Kudakwashe', 'Kudzai', 'Tinashe', 'Paidamoyo', 'Makanaka',
+  'Takudzwa', 'Rutendo', 'Tariro', 'Munyaradzi', 'Ngonidzashe', 'Vimbai', 'Thandiwe',
+  'Sibongile', 'Nokuthula', 'Prudence', 'Gracious', 'Talent', 'Wisdom', 'Joy',
+  'Junior', 'Progress', 'Trust', 'Trymore', 'Learnmore', 'Clever', 'Gift', 'Patience',
+  'Fortunate', 'Hope', 'Faith', 'Mercy', 'Grace', 'Blessed'
+];
+
+const zimbabweanLastNames = [
+  'Moyo', 'Sibanda', 'Ncube', 'Dube', 'Ndlovu', 'Khumalo', 'Mhlanga', 'Shumba',
+  'Chiweshe', 'Gumbo', 'Muchena', 'Mudzuri', 'Chingono', 'Marufu', 'Chifamba',
+  'Tshuma', 'Muzenda', 'Banda', 'Mapfumo', 'Makoni', 'Gwenzi', 'Charamba',
+  'Mupfumi', 'Chikowore', 'Mutasa', 'Zvobgo', 'Chidzero', 'Muchinguri',
+  'Mangwende', 'Chitepo', 'Tongogara', 'Sithole', 'Malianga', 'Mhondoro',
+  'Chihuri', 'Mupandawana', 'Chombo', 'Kasukuwere', 'Mzembi', 'Mpofu',
+  'Khaya', 'Dongo', 'Nyandoro', 'Chikukwa', 'Mashayamombe', 'Mudzengi'
+];
+
+// ============================================================================
+// Zimbabwe Demo Estates
 // ============================================================================
 
 export const demoEstates: Estate[] = [
   {
     id: 'estate-1',
-    name: 'Sunset Heights Estate',
-    address: '123 Sunset Boulevard',
-    city: 'Los Angeles',
-    state: 'CA',
-    zipCode: '90028',
-    country: 'USA',
-    description: 'Luxury residential estate with 50 units',
+    name: 'Borrowdale Brooke Estate',
+    address: '1 Borrowdale Road, Borrowdale',
+    city: 'Harare',
+    state: 'Harare Province',
+    zipCode: '00000',
+    country: 'Zimbabwe',
+    description: 'Premium residential estate in Harare northern suburbs with 50 units',
     totalUnits: 50,
-    defaultLevyAmount: 250,
+    defaultLevyAmount: 150, // USD
     levyDueDay: 1,
     penaltyEnabled: true,
     penaltyType: 'percentage',
     penaltyValue: 5,
     gracePeriodDays: 5,
-    bankName: 'Chase Bank',
-    bankAccountNumber: '****1234',
-    bankRoutingNumber: '021000021',
+    bankName: 'CBZ Bank',
+    bankAccountNumber: '****4567',
+    bankRoutingNumber: '6101',
     status: 'active',
     createdAt: '2023-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
@@ -41,23 +65,23 @@ export const demoEstates: Estate[] = [
   },
   {
     id: 'estate-2',
-    name: 'Green Valley Gardens',
-    address: '456 Green Valley Road',
-    city: 'Austin',
-    state: 'TX',
-    zipCode: '78701',
-    country: 'USA',
-    description: 'Family-friendly estate with 75 units',
+    name: 'Helensvale Gardens',
+    address: '123 Helensvale Drive',
+    city: 'Harare',
+    state: 'Harare Province',
+    zipCode: '00000',
+    country: 'Zimbabwe',
+    description: 'Family-friendly estate in Helensvale with 75 units',
     totalUnits: 75,
-    defaultLevyAmount: 180,
+    defaultLevyAmount: 100, // USD
     levyDueDay: 5,
     penaltyEnabled: true,
     penaltyType: 'fixed',
-    penaltyValue: 25,
+    penaltyValue: 15, // USD
     gracePeriodDays: 7,
-    bankName: 'Bank of America',
-    bankAccountNumber: '****5678',
-    bankRoutingNumber: '111000025',
+    bankName: 'Stanbic Bank',
+    bankAccountNumber: '****8901',
+    bankRoutingNumber: '6201',
     status: 'active',
     createdAt: '2023-02-15T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
@@ -65,23 +89,23 @@ export const demoEstates: Estate[] = [
   },
   {
     id: 'estate-3',
-    name: 'Marina Bay Residences',
-    address: '789 Marina Drive',
-    city: 'Miami',
-    state: 'FL',
-    zipCode: '33131',
-    country: 'USA',
-    description: 'Waterfront estate with 40 luxury units',
+    name: 'Bulawayo Hills Estate',
+    address: '45 Hillside Road',
+    city: 'Bulawayo',
+    state: 'Bulawayo Province',
+    zipCode: '00000',
+    country: 'Zimbabwe',
+    description: 'Luxury estate in Bulawayo with 40 units',
     totalUnits: 40,
-    defaultLevyAmount: 350,
+    defaultLevyAmount: 120, // USD
     levyDueDay: 1,
     penaltyEnabled: true,
     penaltyType: 'percentage',
     penaltyValue: 3,
     gracePeriodDays: 3,
-    bankName: 'Wells Fargo',
-    bankAccountNumber: '****9012',
-    bankRoutingNumber: '121042882',
+    bankName: 'CABS',
+    bankAccountNumber: '****2345',
+    bankRoutingNumber: '6301',
     status: 'active',
     createdAt: '2023-03-10T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
@@ -89,23 +113,23 @@ export const demoEstates: Estate[] = [
   },
   {
     id: 'estate-4',
-    name: 'Oakwood Commons',
-    address: '321 Oakwood Avenue',
-    city: 'Denver',
-    state: 'CO',
-    zipCode: '80202',
-    country: 'USA',
-    description: 'Suburban estate with 60 townhouses',
+    name: 'Mutare Green Valley',
+    address: '78 Palmerstone Road',
+    city: 'Mutare',
+    state: 'Manicaland',
+    zipCode: '00000',
+    country: 'Zimbabwe',
+    description: 'Peaceful estate in Mutare with 60 units',
     totalUnits: 60,
-    defaultLevyAmount: 200,
+    defaultLevyAmount: 80, // USD
     levyDueDay: 10,
     penaltyEnabled: false,
     penaltyType: 'fixed',
     penaltyValue: 0,
     gracePeriodDays: 10,
-    bankName: 'US Bank',
-    bankAccountNumber: '****3456',
-    bankRoutingNumber: '122105155',
+    bankName: 'Nedbank Zimbabwe',
+    bankAccountNumber: '****6789',
+    bankRoutingNumber: '6401',
     status: 'active',
     createdAt: '2023-04-20T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
@@ -113,23 +137,23 @@ export const demoEstates: Estate[] = [
   },
   {
     id: 'estate-5',
-    name: 'Downtown Plaza Estate',
-    address: '555 Downtown Plaza',
-    city: 'Chicago',
-    state: 'IL',
-    zipCode: '60601',
-    country: 'USA',
-    description: 'Urban estate with 30 commercial units',
+    name: 'Victoria Falls Residences',
+    address: '12 Livingstone Way',
+    city: 'Victoria Falls',
+    state: 'Matabeleland North',
+    zipCode: '00000',
+    country: 'Zimbabwe',
+    description: 'Premier estate near Victoria Falls with 30 luxury units',
     totalUnits: 30,
-    defaultLevyAmount: 400,
+    defaultLevyAmount: 200, // USD
     levyDueDay: 1,
     penaltyEnabled: true,
     penaltyType: 'percentage',
     penaltyValue: 10,
     gracePeriodDays: 0,
-    bankName: 'PNC Bank',
-    bankAccountNumber: '****7890',
-    bankRoutingNumber: '043000096',
+    bankName: 'First Capital Bank',
+    bankAccountNumber: '****0123',
+    bankRoutingNumber: '6501',
     status: 'active',
     createdAt: '2023-05-05T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
@@ -138,23 +162,24 @@ export const demoEstates: Estate[] = [
 ];
 
 // ============================================================================
-// Demo Estate Units (225 total units across 5 estates)
+// Zimbabwe Estate Units (225 total units across 5 estates)
 // ============================================================================
 
 export const demoEstateUnits: EstateUnit[] = [];
 
-// Generate units for each estate
 const estateUnitCounts = [50, 75, 40, 60, 30];
-const firstNames = ['James', 'Mary', 'John', 'Patricia', 'Robert', 'Jennifer', 'Michael', 'Linda', 'William', 'Elizabeth', 'David', 'Barbara', 'Richard', 'Susan', 'Joseph', 'Jessica', 'Thomas', 'Sarah', 'Charles', 'Karen'];
-const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson'];
 
 let unitIdCounter = 1;
 demoEstates.forEach((estate, estateIndex) => {
   const unitCount = estateUnitCounts[estateIndex];
   
   for (let i = 1; i <= unitCount; i++) {
-    const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
-    const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+    const firstName = zimbabweanFirstNames[Math.floor(Math.random() * zimbabweanFirstNames.length)];
+    const lastName = zimbabweanLastNames[Math.floor(Math.random() * zimbabweanLastNames.length)];
+    
+    // Zimbabwe mobile number format: +263 7XX XXX XXX
+    const mobileNetwork = ['71', '73', '77', '78'][Math.floor(Math.random() * 4)];
+    const phoneNumber = `+263 ${mobileNetwork}${Math.floor(Math.random() * 10)} ${String(Math.floor(Math.random() * 900) + 100)} ${String(Math.floor(Math.random() * 900) + 100)}`;
     
     demoEstateUnits.push({
       id: `unit-${unitIdCounter}`,
@@ -163,8 +188,8 @@ demoEstates.forEach((estate, estateIndex) => {
       unitType: ['apartment', 'house', 'townhouse'][Math.floor(Math.random() * 3)] as any,
       ownerId: `owner-${unitIdCounter}`,
       ownerName: `${firstName} ${lastName}`,
-      ownerEmail: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@email.com`,
-      ownerPhone: `+1 (555) ${String(Math.floor(Math.random() * 900) + 100)}-${String(Math.floor(Math.random() * 9000) + 1000)}`,
+      ownerEmail: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@gmail.com`,
+      ownerPhone: phoneNumber,
       levyAmount: estate.defaultLevyAmount + Math.floor(Math.random() * 50) - 25,
       bedrooms: Math.floor(Math.random() * 4) + 1,
       bathrooms: Math.floor(Math.random() * 3) + 1,
@@ -187,22 +212,20 @@ export const demoLevies: Levy[] = [];
 const currentYear = 2024;
 const months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
-// Generate levies for occupied units
 let levyIdCounter = 1;
 const statuses: LevyStatus[] = ['unpaid', 'paid', 'partial'];
 
 demoEstateUnits.forEach((unit) => {
   if (unit.status === 'vacant') return;
   
-  // Generate 2-4 months of levy history per unit
   const monthsToGenerate = Math.floor(Math.random() * 3) + 2;
   
   for (let i = 0; i < monthsToGenerate; i++) {
     const month = months[i];
     const status = statuses[Math.floor(Math.random() * statuses.length)];
     const amount = unit.levyAmount;
-    const penaltyAmount = status === 'unpaid' && Math.random() > 0.5 ? amount * 0.05 : 0;
-    const amountPaid = status === 'paid' ? amount + penaltyAmount : status === 'partial' ? amount * 0.5 : 0;
+    const penaltyAmount = status === 'unpaid' && Math.random() > 0.5 ? Math.round(amount * 0.05) : 0;
+    const amountPaid = status === 'paid' ? amount + penaltyAmount : status === 'partial' ? Math.round(amount * 0.5) : 0;
     
     demoLevies.push({
       id: `levy-${levyIdCounter}`,
@@ -219,7 +242,7 @@ demoEstateUnits.forEach((unit) => {
       dueDate: `${currentYear}-${String(month).padStart(2, '0')}-01`,
       paidDate: status === 'paid' ? `${currentYear}-${String(month).padStart(2, '0')}-${String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')}` : undefined,
       paymentMethod: status === 'paid' ? ['cash', 'bank_transfer', 'online'][Math.floor(Math.random() * 3)] as any : undefined,
-      paymentReference: status === 'paid' ? `PAY-${Date.now()}-${levyIdCounter}` : undefined,
+      paymentReference: status === 'paid' ? `ECO${Date.now().toString().slice(-6)}${levyIdCounter}` : undefined,
       penaltyAmount,
       totalAmount: amount + penaltyAmount,
       notes: Math.random() > 0.9 ? 'Special assessment included' : undefined,
@@ -232,14 +255,12 @@ demoEstateUnits.forEach((unit) => {
   }
 });
 
-// Ensure we have at least 500 levies
 while (demoLevies.length < 500) {
   const unit = demoEstateUnits[Math.floor(Math.random() * demoEstateUnits.length)];
   if (unit.status === 'vacant') continue;
   
   const month = months[Math.floor(Math.random() * 12)];
   
-  // Skip if levy already exists for this unit/month/year
   if (demoLevies.some(l => l.unitId === unit.id && l.month === month && l.year === currentYear)) {
     continue;
   }
@@ -271,24 +292,30 @@ while (demoLevies.length < 500) {
 }
 
 // ============================================================================
-// Demo Estate Expenses (50 records)
+// Demo Estate Expenses (50 records) - Zimbabwe Context
 // ============================================================================
 
 export const demoEstateExpenses: EstateExpense[] = [];
 
 const expenseCategories: BudgetCategory[] = ['maintenance', 'security', 'cleaning', 'utilities', 'landscaping', 'admin', 'insurance', 'other'];
 const expenseDescriptions: Record<BudgetCategory, string[]> = {
-  maintenance: ['Elevator repair', 'Roof maintenance', 'Painting common areas', 'Pool maintenance', 'Gate repair', 'Plumbing work'],
-  security: ['Security guard salary', 'CCTV maintenance', 'Access control upgrade', 'Security patrol', 'Alarm system service'],
-  cleaning: ['Common area cleaning', 'Window washing', 'Carpet cleaning', 'Trash removal', 'Pressure washing'],
-  utilities: ['Electricity bill', 'Water bill', 'Gas bill', 'Internet service', 'Waste management'],
-  landscaping: ['Lawn mowing', 'Tree trimming', 'Garden maintenance', 'Irrigation repair', 'Fertilization'],
-  admin: ['Office supplies', 'Legal fees', 'Accounting fees', 'Software subscription', 'Meeting expenses'],
-  insurance: ['Property insurance', 'Liability insurance', 'Flood insurance', 'Fire insurance'],
-  other: ['Miscellaneous repairs', 'Emergency fund', 'Reserve contribution', 'Special project'],
+  maintenance: ['Borehole pump repair', 'Gate motor service', 'Perimeter wall painting', 'Road resurfacing', 'Electrical repairs', 'Plumbing maintenance'],
+  security: ['Security guard wages', 'CCTV maintenance', 'Electric fence repair', 'Security patrol vehicle fuel', 'Alarm system service'],
+  cleaning: ['Common area cleaning', 'Septic tank emptying', ' refuse collection', 'Storm drain clearing', 'Gutter cleaning'],
+  utilities: ['ZESA electricity bill', 'City of Harare water', 'ZOL internet', 'TelOne landline', 'Generator diesel'],
+  landscaping: ['Lawn mowing service', 'Tree pruning', 'Flower bed maintenance', 'Irrigation system repair', 'Weed control'],
+  admin: ['Estate manager salary', 'Legal fees', 'Audit fees', 'Software subscriptions', 'AGM costs'],
+  insurance: ['Buildings insurance', 'Public liability insurance', 'Fidelity guarantee', 'Vehicle insurance'],
+  other: ['Emergency repairs', 'Sinking fund contribution', 'Reserve fund', 'Special projects'],
 };
 
-const vendors = ['ABC Services', 'Premium Maintenance', 'City Utilities', 'Green Landscaping', 'SecureGuard', 'CleanPro', 'Tech Solutions', 'Legal Associates'];
+const zimbabweVendors = [
+  'Trojan Construction', 'Nash Paints', 'PG Industries', 'Lafarge Cement', 
+  'ZimSecurity Services', 'Safeguard Security', 'Redan Security',
+  'City of Harare', 'ZESA Holdings', 'ZOL Zimbabwe', 'TelOne',
+  'Pump & Plant Services', 'Electrosales', 'Plumblink Harare',
+  'Garden Services Zimbabwe', 'Greencare Landscaping'
+];
 
 for (let i = 1; i <= 50; i++) {
   const estate = demoEstates[Math.floor(Math.random() * demoEstates.length)];
@@ -303,14 +330,14 @@ for (let i = 1; i <= 50; i++) {
     estateId: estate.id,
     category,
     description,
-    amount: Math.floor(Math.random() * 2000) + 100,
+    amount: Math.floor(Math.random() * 1500) + 50, // USD amounts
     expenseDate: `2024-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
-    vendorName: vendors[Math.floor(Math.random() * vendors.length)],
-    vendorContact: 'contact@vendor.com',
-    paymentMethod: ['bank_transfer', 'check', 'credit_card'][Math.floor(Math.random() * 3)] as any,
+    vendorName: zimbabweVendors[Math.floor(Math.random() * zimbabweVendors.length)],
+    vendorContact: 'info@vendor.co.zw',
+    paymentMethod: ['cash', 'bank_transfer', 'check'][Math.floor(Math.random() * 3)] as any,
     paymentDate: `2024-${String(month).padStart(2, '0')}-${String(day + 5).padStart(2, '0')}`,
-    receiptUrl: Math.random() > 0.3 ? `https://receipts.eazyrentals.com/expense-${i}.pdf` : undefined,
-    invoiceNumber: `INV-${Date.now()}-${i}`,
+    receiptUrl: Math.random() > 0.3 ? `https://receipts.eazyrentals.co.zw/expense-${i}.pdf` : undefined,
+    invoiceNumber: `INV-ZW-${Date.now().toString().slice(-6)}-${i}`,
     approvedBy: 'user-admin-1',
     approvedAt: `2024-${String(month).padStart(2, '0')}-${String(day + 2).padStart(2, '0')}T00:00:00Z`,
     notes: Math.random() > 0.7 ? 'Urgent repair required' : undefined,
@@ -321,7 +348,7 @@ for (let i = 1; i <= 50; i++) {
 }
 
 // ============================================================================
-// Demo Estate Budgets (10 records - 2 months per estate)
+// Demo Estate Budgets (10 records)
 // ============================================================================
 
 export const demoEstateBudgets: EstateBudget[] = [];
@@ -335,7 +362,7 @@ demoEstates.forEach((estate) => {
     let totalActual = 0;
     
     categories.forEach((cat) => {
-      const budgeted = Math.floor(Math.random() * 3000) + 500;
+      const budgeted = Math.floor(Math.random() * 2000) + 200; // USD
       const variance = Math.floor(Math.random() * 400) - 200;
       const actual = budgeted + variance;
       
@@ -368,12 +395,11 @@ demoEstates.forEach((estate) => {
 });
 
 // ============================================================================
-// Demo Levy Arrears (Calculated from levies)
+// Demo Levy Arrears
 // ============================================================================
 
 export const demoLevyArrears: LevyArrear[] = [];
 
-// Group unpaid levies by unit
 const unpaidByUnit = new Map<string, Levy[]>();
 demoLevies.filter(l => l.status !== 'paid').forEach(levy => {
   if (!unpaidByUnit.has(levy.unitId)) {

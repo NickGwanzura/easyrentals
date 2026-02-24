@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { demoEstates, demoLevies, demoEstateExpenses } from '@/lib/mockData/estates';
+import { MapPin, Phone } from 'lucide-react';
 import Link from 'next/link';
 
 export default function EstateFinancePage() {
@@ -86,11 +87,16 @@ export default function EstateFinancePage() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h2 className="text-xl font-bold">{selectedEstate.name}</h2>
-              <p className="text-primary-100">{selectedEstate.address}, {selectedEstate.city}</p>
+              <div className="flex items-center gap-2 text-primary-100">
+                <MapPin className="w-4 h-4" />
+                {selectedEstate.address}, {selectedEstate.city}, Zimbabwe
+              </div>
               <div className="flex items-center gap-4 mt-2 text-sm text-primary-100">
                 <span>{selectedEstate.totalUnits} Units</span>
                 <span>•</span>
-                <span>Levy: {formatCurrency(selectedEstate.defaultLevyAmount)}/month</span>
+                <span>Levy: US{formatCurrency(selectedEstate.defaultLevyAmount)}/month</span>
+                <span>•</span>
+                <span>Due: {selectedEstate.levyDueDay}{selectedEstate.levyDueDay === 1 ? 'st' : 'th'} of month</span>
               </div>
             </div>
             <div className="flex gap-3">

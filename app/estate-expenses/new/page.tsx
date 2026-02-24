@@ -131,14 +131,14 @@ export default function NewExpensePage() {
                   label="Vendor Name"
                   value={formData.vendorName}
                   onChange={(e) => setFormData({ ...formData, vendorName: e.target.value })}
-                  placeholder="e.g., ABC Services"
+                  placeholder="e.g., Trojan Construction"
                 />
 
                 <Input
                   label="Vendor Contact"
                   value={formData.vendorContact}
                   onChange={(e) => setFormData({ ...formData, vendorContact: e.target.value })}
-                  placeholder="e.g., contact@vendor.com"
+                  placeholder="e.g., info@trojan.co.zw"
                 />
               </div>
 
@@ -149,10 +149,11 @@ export default function NewExpensePage() {
                   onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
                   className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
                 >
-                  <option value="cash">Cash</option>
-                  <option value="bank_transfer">Bank Transfer</option>
-                  <option value="check">Check</option>
-                  <option value="credit_card">Credit Card</option>
+                  <option value="cash">Cash (USD/ZWL)</option>
+                  <option value="bank_transfer">Bank Transfer (RTGS/Zipit)</option>
+                  <option value="ecocash">EcoCash</option>
+                  <option value="onemoney">OneMoney</option>
+                  <option value="check">Bank Cheque</option>
                 </select>
               </div>
 
