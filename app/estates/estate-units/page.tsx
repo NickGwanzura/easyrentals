@@ -1,40 +1,61 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { Suspense } from 'react';
+import React, { useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import Card, { CardHeader } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import Modal from '@/components/ui/Modal';
+import { useToast } from '@/components/ui/Toast';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { 
   demoEstates, 
   demoEstateUnits, 
-  demoEstateLevies 
+  demoEstateLevies,
+  type EstateUnit,
+  type EstateUnitStatus 
 } from '@/lib/mockData/estate-management';
 import { formatCurrency } from '@/lib/utils';
 import { 
   Home, 
   Plus, 
   Search, 
-  Filter,
   Building2,
   Phone,
-  Mail,
   DollarSign,
-  AlertTriangle
+  AlertTriangle,
+  Save,
+  X,
+  Eye,
+  User
 } from 'lucide-react';
-import Link from 'next/link';
 
 function EstateUnitsContent() {
   const searchParams = useSearchParams();
   const estateId = searchParams.get('estate');
+  const { showToast } = useToast();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedEstate, setSelectedEstate] = useState<string>(estateId || 'all');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [viewingUnit, setViewingUnit] = useState<EstateUnit | null>(null);
   
-  // Get units
+  // Form state
+  const [formData, setFormData] = useState({
+    unitNumber: '',
+    estateId: '',
+    blockName: '',
+    ownerName: '',
+    ownerPhone: '',
+    ownerEmail: '',
+    tenantName: '',
+    tenantPhone: '',
+    tenantEmail: '',
+    status: 'vacant' as EstateUnitStatus,
+    monthlyLevy: 0,
+  });
+
   let units = demoEstateUnits;
   
   if (selectedEstate !== 'all') {
@@ -44,19 +65,68 @@ function EstateUnitsContent() {
   if (searchQuery) {
     units = units.filter(u => 
       u.unitNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.ownerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.tenantName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.estateName.toLowerCase().includes(searchQuery.toLowerCase())
+      (u.ownerName?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+      (u.tenantName?.toLowerCase() || '').includes(searchQuery.toLowerCase())
     );
   }
   
   if (statusFilter !== 'all') {
     units = units.filter(u => u.status === statusFilter);
   }
-  
+
   const getUnitLevy = (unitId: string) => {
     const levies = demoEstateLevies.filter(l => l.unitId === unitId);
     return levies.reduce((sum, l) => sum + l.balance, 0);
+  };
+
+  const handleAddUnit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const estate = demoEstates.find(e => e.id === formData.estateId);
+    
+    const newUnit: EstateUnit = {
+      id: `unit-${Date.now()}`,
+      estateId: formData.estateId,
+      estateName: estate?.name || '',
+      unitNumber: formData.unitNumber,
+      blockName: formData.blockName || undefined,
+      ownerName: formData.ownerName || undefined,
+      ownerPhone: formData.ownerPhone || undefined,
+      ownerEmail: formData.ownerEmail || undefined,
+      tenantName: formData.tenantName || undefined,
+      tenantPhone: formData.tenantPhone || undefined,
+      tenantEmail: formData.tenantEmail || undefined,
+      status: formData.status,
+      monthlyLevy: formData.monthlyLevy,
+      outstandingLevy: 0,
+      unitType: 'apartment',
+      parkingSpaces: 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    
+    demoEstateUnits.push(newUnit);
+    
+    // Update estate unit count
+    if (estate) {
+      estate.totalUnits += 1;
+    }
+    
+    showToast('Unit created successfully!', 'success');
+    setIsAddModalOpen(false);
+    setFormData({
+      unitNumber: '',
+      estateId: '',
+      blockName: '',
+      ownerName: '',
+      ownerPhone: '',
+      ownerEmail: '',
+      tenantName: '',
+      tenantPhone: '',
+      tenantEmail: '',
+      status: 'vacant',
+      monthlyLevy: 0,
+    });
   };
 
   return (
@@ -73,7 +143,11 @@ function EstateUnitsContent() {
             </div>
             <h1 className="text-2xl font-bold text-slate-900">Estate Units</h1>
           </div>
-          <Button leftIcon={<Plus className="w-4 h-4" />} variant="primary">
+          <Button 
+            leftIcon={<Plus className="w-4 h-4" />} 
+            variant="primary"
+            onClick={() => setIsAddModalOpen(true)}
+          >
             Add Unit
           </Button>
         </div>
@@ -150,20 +224,24 @@ function EstateUnitsContent() {
                       {unit.blockName && <p className="text-xs text-slate-500">{unit.blockName}</p>}
                     </td>
                     <td className="py-4 px-4">
-                      <p className="text-sm text-slate-900">{unit.ownerName}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Phone className="w-3 h-3 text-slate-400" />
-                        <span className="text-xs text-slate-500">{unit.ownerPhone}</span>
-                      </div>
+                      <p className="text-sm text-slate-900">{unit.ownerName || '-'}</p>
+                      {unit.ownerPhone && (
+                        <div className="flex items-center gap-2 mt-1">
+                          <Phone className="w-3 h-3 text-slate-400" />
+                          <span className="text-xs text-slate-500">{unit.ownerPhone}</span>
+                        </div>
+                      )}
                     </td>
                     <td className="py-4 px-4">
                       {unit.tenantName ? (
                         <div>
                           <p className="text-sm text-slate-900">{unit.tenantName}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Phone className="w-3 h-3 text-slate-400" />
-                            <span className="text-xs text-slate-500">{unit.tenantPhone}</span>
-                          </div>
+                          {unit.tenantPhone && (
+                            <div className="flex items-center gap-2 mt-1">
+                              <Phone className="w-3 h-3 text-slate-400" />
+                              <span className="text-xs text-slate-500">{unit.tenantPhone}</span>
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <span className="text-xs text-slate-400 italic">No tenant</span>
@@ -174,7 +252,7 @@ function EstateUnitsContent() {
                     </td>
                     <td className="py-4 px-4">
                       <div>
-                        <p className="text-sm font-medium text-slate-900">{formatCurrency(unit.monthlyLevy)}/mo</p>
+                        <p className="text-sm font-medium text-slate-900">{formatCurrency(unit.monthlyLevy || 0)}/mo</p>
                         {getUnitLevy(unit.id) > 0 && (
                           <p className="text-xs text-danger-600 flex items-center gap-1 mt-1">
                             <AlertTriangle className="w-3 h-3" />
@@ -184,9 +262,14 @@ function EstateUnitsContent() {
                       </div>
                     </td>
                     <td className="py-4 px-4">
-                      <button className="text-sm text-primary-600 hover:text-primary-700 font-medium">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        leftIcon={<Eye className="w-4 h-4" />}
+                        onClick={() => setViewingUnit(unit)}
+                      >
                         View
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 ))}
@@ -203,6 +286,219 @@ function EstateUnitsContent() {
           )}
         </Card>
       </div>
+
+      {/* Add Unit Modal */}
+      <Modal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        title="Add New Unit"
+        size="lg"
+        footer={
+          <div className="flex justify-end gap-3">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsAddModalOpen(false)}
+              leftIcon={<X className="w-4 h-4" />}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="primary" 
+              onClick={handleAddUnit}
+              leftIcon={<Save className="w-4 h-4" />}
+            >
+              Create Unit
+            </Button>
+          </div>
+        }
+      >
+        <form onSubmit={handleAddUnit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Estate *</label>
+              <select
+                required
+                value={formData.estateId}
+                onChange={(e) => setFormData({ ...formData, estateId: e.target.value })}
+                className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="">Select estate</option>
+                {demoEstates.map(e => (
+                  <option key={e.id} value={e.id}>{e.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Unit Number *</label>
+              <input
+                type="text"
+                required
+                value={formData.unitNumber}
+                onChange={(e) => setFormData({ ...formData, unitNumber: e.target.value })}
+                className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                placeholder="e.g., A12"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Block Name</label>
+              <input
+                type="text"
+                value={formData.blockName}
+                onChange={(e) => setFormData({ ...formData, blockName: e.target.value })}
+                className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                placeholder="e.g., Block A"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Status</label>
+              <select
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value as EstateUnitStatus })}
+                className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="vacant">Vacant</option>
+                <option value="occupied">Occupied</option>
+                <option value="owner_occupied">Owner Occupied</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Monthly Levy (USD)</label>
+            <input
+              type="number"
+              value={formData.monthlyLevy}
+              onChange={(e) => setFormData({ ...formData, monthlyLevy: parseFloat(e.target.value) || 0 })}
+              className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              placeholder="0.00"
+            />
+          </div>
+
+          <div className="border-t border-slate-100 pt-4">
+            <h4 className="text-sm font-semibold text-slate-900 mb-3">Owner Information</h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Name</label>
+                <input
+                  type="text"
+                  value={formData.ownerName}
+                  onChange={(e) => setFormData({ ...formData, ownerName: e.target.value })}
+                  className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  placeholder="Owner name"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Phone</label>
+                <input
+                  type="tel"
+                  value={formData.ownerPhone}
+                  onChange={(e) => setFormData({ ...formData, ownerPhone: e.target.value })}
+                  className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  placeholder="+263 71 123 4567"
+                />
+              </div>
+            </div>
+            <div className="mt-3">
+              <label className="block text-sm font-medium text-slate-700 mb-2">Email</label>
+              <input
+                type="email"
+                value={formData.ownerEmail}
+                onChange={(e) => setFormData({ ...formData, ownerEmail: e.target.value })}
+                className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                placeholder="owner@example.com"
+              />
+            </div>
+          </div>
+
+          <div className="border-t border-slate-100 pt-4">
+            <h4 className="text-sm font-semibold text-slate-900 mb-3">Tenant Information</h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Name</label>
+                <input
+                  type="text"
+                  value={formData.tenantName}
+                  onChange={(e) => setFormData({ ...formData, tenantName: e.target.value })}
+                  className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  placeholder="Tenant name"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Phone</label>
+                <input
+                  type="tel"
+                  value={formData.tenantPhone}
+                  onChange={(e) => setFormData({ ...formData, tenantPhone: e.target.value })}
+                  className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  placeholder="+263 71 123 4567"
+                />
+              </div>
+            </div>
+            <div className="mt-3">
+              <label className="block text-sm font-medium text-slate-700 mb-2">Email</label>
+              <input
+                type="email"
+                value={formData.tenantEmail}
+                onChange={(e) => setFormData({ ...formData, tenantEmail: e.target.value })}
+                className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                placeholder="tenant@example.com"
+              />
+            </div>
+          </div>
+        </form>
+      </Modal>
+
+      {/* View Unit Modal */}
+      <Modal
+        isOpen={!!viewingUnit}
+        onClose={() => setViewingUnit(null)}
+        title={`Unit ${viewingUnit?.unitNumber}`}
+        size="md"
+      >
+        {viewingUnit && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-slate-500">Status</span>
+              <StatusBadge status={viewingUnit.status} />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-slate-500">Estate</span>
+              <span className="text-sm font-medium">{viewingUnit.estateName}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-slate-500">Monthly Levy</span>
+              <span className="text-sm font-medium">{formatCurrency(viewingUnit.monthlyLevy || 0)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-slate-500">Outstanding</span>
+              <span className={`text-sm font-medium ${getUnitLevy(viewingUnit.id) > 0 ? 'text-danger-600' : ''}`}>
+                {formatCurrency(getUnitLevy(viewingUnit.id))}
+              </span>
+            </div>
+            
+            {viewingUnit.ownerName && (
+              <div className="border-t border-slate-100 pt-4">
+                <h4 className="text-sm font-semibold text-slate-900 mb-2">Owner</h4>
+                <p className="text-sm">{viewingUnit.ownerName}</p>
+                {viewingUnit.ownerPhone && <p className="text-sm text-slate-500">{viewingUnit.ownerPhone}</p>}
+                {viewingUnit.ownerEmail && <p className="text-sm text-slate-500">{viewingUnit.ownerEmail}</p>}
+              </div>
+            )}
+            
+            {viewingUnit.tenantName && (
+              <div className="border-t border-slate-100 pt-4">
+                <h4 className="text-sm font-semibold text-slate-900 mb-2">Tenant</h4>
+                <p className="text-sm">{viewingUnit.tenantName}</p>
+                {viewingUnit.tenantPhone && <p className="text-sm text-slate-500">{viewingUnit.tenantPhone}</p>}
+                {viewingUnit.tenantEmail && <p className="text-sm text-slate-500">{viewingUnit.tenantEmail}</p>}
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
     </DashboardLayout>
   );
 }

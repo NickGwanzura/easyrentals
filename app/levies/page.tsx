@@ -1,31 +1,35 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Suspense } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import Card, { CardHeader } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import Modal from '@/components/ui/Modal';
+import { useToast } from '@/components/ui/Toast';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { 
   demoEstates, 
   demoEstateUnits, 
-  demoEstateLevies 
+  demoEstateLevies,
+  type Levy,
+  type LevyStatus 
 } from '@/lib/mockData/estate-management';
 import { formatCurrency } from '@/lib/utils';
 import { 
   DollarSign, 
   Plus, 
   Search, 
-  Filter,
   Building2,
   Calendar,
   CheckCircle,
   AlertCircle,
   Clock,
-  Download
+  Download,
+  Save,
+  X,
+  Wallet
 } from 'lucide-react';
-import Link from 'next/link';
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -35,13 +39,32 @@ const MONTHS = [
 function LeviesContent() {
   const searchParams = useSearchParams();
   const estateId = searchParams.get('estate');
+  const { showToast } = useToast();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedEstate, setSelectedEstate] = useState<string>(estateId || 'all');
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
+  const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [selectedLevy, setSelectedLevy] = useState<Levy | null>(null);
   
-  // Get levies
+  // Generate form state
+  const [generateForm, setGenerateForm] = useState({
+    estateId: '',
+    month: new Date().getMonth(),
+    year: new Date().getFullYear(),
+    amount: 100,
+  });
+  
+  // Payment form state
+  const [paymentForm, setPaymentForm] = useState({
+    amount: 0,
+    paymentDate: new Date().toISOString().split('T')[0],
+    paymentMethod: 'cash' as const,
+    notes: '',
+  });
+
   let levies = demoEstateLevies;
   
   if (selectedEstate !== 'all') {
@@ -50,8 +73,8 @@ function LeviesContent() {
   
   if (searchQuery) {
     levies = levies.filter(l => 
-      l.unitNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      l.estateName.toLowerCase().includes(searchQuery.toLowerCase())
+      l.unitNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      l.estateName?.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }
   
@@ -69,7 +92,128 @@ function LeviesContent() {
   const totalPaid = levies.reduce((sum, l) => sum + l.paidAmount, 0);
   const totalOutstanding = levies.reduce((sum, l) => sum + l.balance, 0);
   const paidCount = levies.filter(l => l.status === 'paid').length;
-  const unpaidCount = levies.filter(l => l.status !== 'paid').length;
+
+  const handleGenerateLevies = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const estate = demoEstates.find(e => e.id === generateForm.estateId);
+    if (!estate) {
+      showToast('Please select an estate', 'error');
+      return;
+    }
+    
+    const units = demoEstateUnits.filter(u => u.estateId === generateForm.estateId);
+    let generatedCount = 0;
+    
+    units.forEach(unit => {
+      // Check if levy already exists for this unit/month/year
+      const existing = demoEstateLevies.find(l => 
+        l.unitId === unit.id && 
+        l.month === generateForm.month && 
+        l.year === generateForm.year
+      );
+      
+      if (!existing) {
+        const newLevy: Levy = {
+          id: `levy-${Date.now()}-${unit.id}`,
+          estateId: generateForm.estateId,
+          estateName: estate.name,
+          unitId: unit.id,
+          unitNumber: unit.unitNumber,
+          blockName: unit.blockName,
+          month: generateForm.month,
+          year: generateForm.year,
+          levyAmount: unit.monthlyLevy || generateForm.amount,
+          paidAmount: 0,
+          balance: unit.monthlyLevy || generateForm.amount,
+          status: 'unpaid',
+          dueDate: `${generateForm.year}-${String(generateForm.month + 1).padStart(2, '0')}-05`,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        demoEstateLevies.push(newLevy);
+        generatedCount++;
+      }
+    });
+    
+    if (generatedCount > 0) {
+      showToast(`Generated ${generatedCount} levy records`, 'success');
+    } else {
+      showToast('No new levies to generate - records already exist', 'info');
+    }
+    
+    setIsGenerateModalOpen(false);
+  };
+
+  const handleRecordPayment = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!selectedLevy) return;
+    
+    const levyIndex = demoEstateLevies.findIndex(l => l.id === selectedLevy.id);
+    if (levyIndex === -1) return;
+    
+    const levy = demoEstateLevies[levyIndex];
+    const newPaidAmount = levy.paidAmount + paymentForm.amount;
+    const newBalance = levy.levyAmount - newPaidAmount;
+    
+    let newStatus: LevyStatus = 'partial';
+    if (newBalance <= 0) newStatus = 'paid';
+    else if (newPaidAmount === 0) newStatus = 'unpaid';
+    
+    demoEstateLevies[levyIndex] = {
+      ...levy,
+      paidAmount: newPaidAmount,
+      balance: Math.max(0, newBalance),
+      status: newStatus,
+      paymentDate: paymentForm.paymentDate,
+      updatedAt: new Date().toISOString(),
+    };
+    
+    showToast(`Payment of ${formatCurrency(paymentForm.amount)} recorded`, 'success');
+    setIsPaymentModalOpen(false);
+    setSelectedLevy(null);
+    setPaymentForm({
+      amount: 0,
+      paymentDate: new Date().toISOString().split('T')[0],
+      paymentMethod: 'cash',
+      notes: '',
+    });
+  };
+
+  const handleExport = () => {
+    // Create CSV content
+    const headers = ['Estate', 'Unit', 'Month', 'Year', 'Levy Amount', 'Paid', 'Balance', 'Status'];
+    const rows = levies.map(l => [
+      l.estateName,
+      l.unitNumber,
+      MONTHS[l.month],
+      l.year,
+      l.levyAmount,
+      l.paidAmount,
+      l.balance,
+      l.status
+    ]);
+    
+    const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `levies-export-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    
+    showToast('Levies exported to CSV', 'success');
+  };
+
+  const openPaymentModal = (levy: Levy) => {
+    setSelectedLevy(levy);
+    setPaymentForm({
+      ...paymentForm,
+      amount: levy.balance,
+    });
+    setIsPaymentModalOpen(true);
+  };
 
   return (
     <DashboardLayout title="Levy Management">
@@ -86,10 +230,18 @@ function LeviesContent() {
             <h1 className="text-2xl font-bold text-slate-900">Monthly Levies</h1>
           </div>
           <div className="flex gap-3">
-            <Button leftIcon={<Download className="w-4 h-4" />} variant="outline">
+            <Button 
+              leftIcon={<Download className="w-4 h-4" />} 
+              variant="outline"
+              onClick={handleExport}
+            >
               Export
             </Button>
-            <Button leftIcon={<Plus className="w-4 h-4" />} variant="primary">
+            <Button 
+              leftIcon={<Plus className="w-4 h-4" />} 
+              variant="primary"
+              onClick={() => setIsGenerateModalOpen(true)}
+            >
               Generate Levies
             </Button>
           </div>
@@ -175,7 +327,7 @@ function LeviesContent() {
             >
               <option value="all">All Months</option>
               {MONTHS.map((m, i) => (
-                <option key={i} value={i + 1}>{m}</option>
+                <option key={i} value={i}>{m}</option>
               ))}
             </select>
             <select
@@ -206,7 +358,6 @@ function LeviesContent() {
                   <th className="text-left py-3 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider">Paid</th>
                   <th className="text-left py-3 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider">Balance</th>
                   <th className="text-left py-3 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider">Due Date</th>
                   <th className="text-left py-3 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
@@ -230,7 +381,7 @@ function LeviesContent() {
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-slate-400" />
-                        <span className="text-sm text-slate-900">{MONTHS[levy.month - 1]} {levy.year}</span>
+                        <span className="text-sm text-slate-900">{MONTHS[levy.month]} {levy.year}</span>
                       </div>
                     </td>
                     <td className="py-4 px-4">
@@ -248,12 +399,19 @@ function LeviesContent() {
                       <StatusBadge status={levy.status} />
                     </td>
                     <td className="py-4 px-4">
-                      <span className="text-sm text-slate-600">{levy.dueDate}</span>
-                    </td>
-                    <td className="py-4 px-4">
-                      <button className="text-sm text-primary-600 hover:text-primary-700 font-medium">
-                        Record Payment
-                      </button>
+                      {levy.status !== 'paid' && (
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          leftIcon={<Wallet className="w-3 h-3" />}
+                          onClick={() => openPaymentModal(levy)}
+                        >
+                          Record Payment
+                        </Button>
+                      )}
+                      {levy.status === 'paid' && (
+                        <span className="text-sm text-success-600 font-medium">Paid</span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -270,6 +428,176 @@ function LeviesContent() {
           )}
         </Card>
       </div>
+
+      {/* Generate Levies Modal */}
+      <Modal
+        isOpen={isGenerateModalOpen}
+        onClose={() => setIsGenerateModalOpen(false)}
+        title="Generate Monthly Levies"
+        footer={
+          <div className="flex justify-end gap-3">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsGenerateModalOpen(false)}
+              leftIcon={<X className="w-4 h-4" />}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="primary" 
+              onClick={handleGenerateLevies}
+              leftIcon={<Save className="w-4 h-4" />}
+            >
+              Generate
+            </Button>
+          </div>
+        }
+      >
+        <form onSubmit={handleGenerateLevies} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Select Estate *</label>
+            <select
+              required
+              value={generateForm.estateId}
+              onChange={(e) => setGenerateForm({ ...generateForm, estateId: e.target.value })}
+              className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              <option value="">Choose an estate</option>
+              {demoEstates.map(e => (
+                <option key={e.id} value={e.id}>{e.name}</option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Month</label>
+              <select
+                value={generateForm.month}
+                onChange={(e) => setGenerateForm({ ...generateForm, month: parseInt(e.target.value) })}
+                className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                {MONTHS.map((m, i) => (
+                  <option key={i} value={i}>{m}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Year</label>
+              <input
+                type="number"
+                value={generateForm.year}
+                onChange={(e) => setGenerateForm({ ...generateForm, year: parseInt(e.target.value) })}
+                className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+          </div>
+          
+          <p className="text-sm text-slate-500">
+            This will generate levy records for all units in the selected estate. 
+            Existing records for the same period will be skipped.
+          </p>
+        </form>
+      </Modal>
+
+      {/* Record Payment Modal */}
+      <Modal
+        isOpen={isPaymentModalOpen}
+        onClose={() => {
+          setIsPaymentModalOpen(false);
+          setSelectedLevy(null);
+        }}
+        title={`Record Payment - Unit ${selectedLevy?.unitNumber}`}
+        footer={
+          <div className="flex justify-end gap-3">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setIsPaymentModalOpen(false);
+                setSelectedLevy(null);
+              }}
+              leftIcon={<X className="w-4 h-4" />}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="primary" 
+              onClick={handleRecordPayment}
+              leftIcon={<Save className="w-4 h-4" />}
+            >
+              Record Payment
+            </Button>
+          </div>
+        }
+      >
+        <form onSubmit={handleRecordPayment} className="space-y-4">
+          {selectedLevy && (
+            <div className="bg-slate-50 p-4 rounded-lg">
+              <div className="flex justify-between mb-2">
+                <span className="text-sm text-slate-600">Levy Amount</span>
+                <span className="text-sm font-medium">{formatCurrency(selectedLevy.levyAmount)}</span>
+              </div>
+              <div className="flex justify-between mb-2">
+                <span className="text-sm text-slate-600">Already Paid</span>
+                <span className="text-sm font-medium">{formatCurrency(selectedLevy.paidAmount)}</span>
+              </div>
+              <div className="flex justify-between pt-2 border-t border-slate-200">
+                <span className="text-sm font-medium text-slate-900">Balance Due</span>
+                <span className="text-sm font-bold text-danger-600">{formatCurrency(selectedLevy.balance)}</span>
+              </div>
+            </div>
+          )}
+          
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Payment Amount *</label>
+            <input
+              type="number"
+              required
+              min="1"
+              max={selectedLevy?.balance}
+              value={paymentForm.amount}
+              onChange={(e) => setPaymentForm({ ...paymentForm, amount: parseFloat(e.target.value) || 0 })}
+              className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Payment Date *</label>
+            <input
+              type="date"
+              required
+              value={paymentForm.paymentDate}
+              onChange={(e) => setPaymentForm({ ...paymentForm, paymentDate: e.target.value })}
+              className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Payment Method</label>
+            <select
+              value={paymentForm.paymentMethod}
+              onChange={(e) => setPaymentForm({ ...paymentForm, paymentMethod: e.target.value as any })}
+              className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              <option value="cash">Cash</option>
+              <option value="bank_transfer">Bank Transfer</option>
+              <option value="mobile_money">Mobile Money</option>
+              <option value="cheque">Cheque</option>
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Notes</label>
+            <textarea
+              value={paymentForm.notes}
+              onChange={(e) => setPaymentForm({ ...paymentForm, notes: e.target.value })}
+              className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              rows={2}
+              placeholder="Optional notes..."
+            />
+          </div>
+        </form>
+      </Modal>
     </DashboardLayout>
   );
 }
