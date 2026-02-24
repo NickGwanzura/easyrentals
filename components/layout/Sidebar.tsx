@@ -20,6 +20,10 @@ import {
   Receipt,
   DollarSign,
   FileText,
+  MapPin,
+  HomeIcon,
+  Wallet,
+  ArrowRightLeft,
 } from 'lucide-react';
 import { UserRole } from '@/types';
 
@@ -40,8 +44,16 @@ const navigation: NavItem[] = [
   { name: 'Settings', href: '/settings', icon: Settings, roles: ['admin', 'landlord', 'agent', 'tenant'] },
 ];
 
+// Estate Management Navigation
+const estateManagementNav: NavItem[] = [
+  { name: 'Estates', href: '/estates', icon: MapPin, roles: ['admin', 'landlord', 'agent'] },
+  { name: 'Units', href: '/estates/estate-units', icon: HomeIcon, roles: ['admin', 'landlord', 'agent'] },
+  { name: 'Levies', href: '/levies', icon: Wallet, roles: ['admin', 'landlord', 'agent'] },
+  { name: 'Moves', href: '/estate-moves', icon: ArrowRightLeft, roles: ['admin', 'landlord', 'agent'] },
+];
+
 // Estate Accounting Navigation
-const estateNavigation: NavItem[] = [
+const estateAccountingNav: NavItem[] = [
   { name: 'Estate Finance', href: '/estates/finance', icon: Landmark, roles: ['admin', 'landlord'] },
   { name: 'Budget', href: '/estates/budget', icon: BarChart3, roles: ['admin', 'landlord'] },
   { name: 'Expenses', href: '/estate-expenses', icon: DollarSign, roles: ['admin', 'landlord'] },
@@ -58,7 +70,11 @@ export default function Sidebar() {
     user && item.roles.includes(user.role)
   );
   
-  const filteredEstateNav = estateNavigation.filter(item => 
+  const filteredEstateManagementNav = estateManagementNav.filter(item => 
+    user && item.roles.includes(user.role)
+  );
+  
+  const filteredEstateAccountingNav = estateAccountingNav.filter(item => 
     user && item.roles.includes(user.role)
   );
 
@@ -95,15 +111,44 @@ export default function Sidebar() {
           );
         })}
         
+        {/* Estate Management Section */}
+        {filteredEstateManagementNav.length > 0 && (
+          <>
+            <div className="pt-4 mt-4 border-t border-slate-100">
+              <p className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                Estate Management
+              </p>
+            </div>
+            {filteredEstateManagementNav.map((item) => {
+              const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={cn(
+                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
+                    isActive
+                      ? 'bg-primary-50 text-primary-700'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  )}
+                >
+                  <item.icon className={cn('w-5 h-5', isActive ? 'text-primary-600' : 'text-slate-400')} />
+                  {item.name}
+                </Link>
+              );
+            })}
+          </>
+        )}
+
         {/* Estate Accounting Section */}
-        {filteredEstateNav.length > 0 && (
+        {filteredEstateAccountingNav.length > 0 && (
           <>
             <div className="pt-4 mt-4 border-t border-slate-100">
               <p className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
                 Estate Accounting
               </p>
             </div>
-            {filteredEstateNav.map((item) => {
+            {filteredEstateAccountingNav.map((item) => {
               const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
               return (
                 <Link
