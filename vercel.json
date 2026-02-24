@@ -33,13 +33,18 @@
   "rewrites": [
     {
       "source": "/",
-      "destination": "/landing"
+      "destination": "/login"
     }
   ],
   "redirects": [
     {
+      "source": "/landing",
+      "destination": "/login",
+      "permanent": true
+    },
+    {
       "source": "/home",
-      "destination": "/landing",
+      "destination": "/login",
       "permanent": true
     },
     {
