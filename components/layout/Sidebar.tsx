@@ -16,6 +16,10 @@ import {
   UserCircle,
   ClipboardList,
   BarChart3,
+  Landmark,
+  Receipt,
+  DollarSign,
+  FileText,
 } from 'lucide-react';
 import { UserRole } from '@/types';
 
@@ -36,11 +40,25 @@ const navigation: NavItem[] = [
   { name: 'Settings', href: '/settings', icon: Settings, roles: ['admin', 'landlord', 'agent', 'tenant'] },
 ];
 
+// Estate Accounting Navigation
+const estateNavigation: NavItem[] = [
+  { name: 'Estate Finance', href: '/estates/finance', icon: Landmark, roles: ['admin', 'landlord'] },
+  { name: 'Budget', href: '/estates/budget', icon: BarChart3, roles: ['admin', 'landlord'] },
+  { name: 'Expenses', href: '/estate-expenses', icon: DollarSign, roles: ['admin', 'landlord'] },
+  { name: 'Arrears', href: '/estates/arrears', icon: Receipt, roles: ['admin', 'landlord'] },
+  { name: 'Statements', href: '/owners/statements', icon: FileText, roles: ['admin', 'landlord'] },
+  { name: 'Reports', href: '/estates/reports', icon: BarChart3, roles: ['admin', 'landlord'] },
+];
+
 export default function Sidebar() {
   const pathname = usePathname();
   const { user, logout, isDemoMode } = useAuth();
 
   const filteredNav = navigation.filter(item => 
+    user && item.roles.includes(user.role)
+  );
+  
+  const filteredEstateNav = estateNavigation.filter(item => 
     user && item.roles.includes(user.role)
   );
 
@@ -76,6 +94,35 @@ export default function Sidebar() {
             </Link>
           );
         })}
+        
+        {/* Estate Accounting Section */}
+        {filteredEstateNav.length > 0 && (
+          <>
+            <div className="pt-4 mt-4 border-t border-slate-100">
+              <p className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                Estate Accounting
+              </p>
+            </div>
+            {filteredEstateNav.map((item) => {
+              const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={cn(
+                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
+                    isActive
+                      ? 'bg-primary-50 text-primary-700'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  )}
+                >
+                  <item.icon className={cn('w-5 h-5', isActive ? 'text-primary-600' : 'text-slate-400')} />
+                  {item.name}
+                </Link>
+              );
+            })}
+          </>
+        )}
       </nav>
 
       {/* User Section */}
