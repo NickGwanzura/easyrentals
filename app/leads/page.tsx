@@ -23,13 +23,14 @@ import { Lead, LeadStatus } from '@/types';
 import { demoData } from '@/lib/mockData';
 
 export default function LeadsPage() {
-  const { user } = useRequireAuth(['admin', 'landlord', 'agent']);
+  const { user, isLoading } = useRequireAuth(['admin', 'landlord', 'agent']);
   const { canManageLeads } = usePermission();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<LeadStatus | 'all'>('all');
 
-  if (!user) return null;
+  if (isLoading) return <div className="p-8">Loading...</div>;
+  if (!user) return <div className="p-8">Not authenticated</div>;
 
   // Filter leads based on user role
   const userLeads = user.role === 'agent' 
