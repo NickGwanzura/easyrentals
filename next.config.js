@@ -91,9 +91,11 @@ const nextConfig = {
   
   // Experimental features
   experimental: {
-    // Remove appDir as it's now default in Next.js 14
     serverComponentsExternalPackages: [],
   },
+  
+  // Speed up build - skip static generation for problematic pages
+  staticPageGenerationTimeout: 60,
 };
 
 module.exports = nextConfig;

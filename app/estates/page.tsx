@@ -8,7 +8,8 @@ import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
 import StatusBadge from '@/components/ui/StatusBadge';
-import { demoEstates, type Estate } from '@/lib/mockData/estate-management';
+import { demoEstates } from '@/lib/mockData/estate-management';
+import type { Estate } from '@/types';
 import { formatCurrency } from '@/lib/utils';
 import { 
   Building2, 
@@ -67,7 +68,7 @@ function EstatesContent() {
     const newEstate: Estate = {
       id: `est-${Date.now()}`,
       ...formData,
-      status: 'Active',
+      status: 'active',
       createdAt: new Date().toISOString(),
     };
     

@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { getBillboards, getCompanyLogo } from '../services/mockData';
-import { Billboard } from '../types';
+import { Billboard } from '../types-billboard';
 import L from 'leaflet';
 import { MapPin, Maximize2, Car, Layers, Zap, X, ExternalLink } from 'lucide-react';
 

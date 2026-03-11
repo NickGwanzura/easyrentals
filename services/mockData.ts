@@ -1,4 +1,4 @@
-import { Billboard, BillboardType, Client, Contract, Invoice, Expense, User, PrintingJob, OutsourcedBillboard, AuditLogEntry, CompanyProfile, Task, VAT_RATE, MaintenanceLog } from '../types';
+import { Billboard, BillboardType, Client, Contract, Invoice, Expense, User, PrintingJob, OutsourcedBillboard, AuditLogEntry, CompanyProfile, Task, VAT_RATE, MaintenanceLog } from '../types-billboard';
 import { supabase } from './supabaseClient';
 
 export const ZIM_TOWNS = [

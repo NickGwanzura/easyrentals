@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import { DollarSign, FileText, Activity, Users, Sparkles, TrendingUp, Bell, AlertTriangle, Calendar, ArrowRight, BrainCircuit, Newspaper, X } from 'lucide-react';
 import { getContracts, getInvoices, getBillboards, getClients, getExpiringContracts, getOverdueInvoices, getUpcomingBillings, getFinancialTrends, subscribe } from '../services/mockData';
-import { BillboardType } from '../types';
+import { BillboardType } from '../types-billboard';
 import { analyzeBusinessData, generateGreeting, fetchIndustryNews } from '../services/aiService';
 import { getCurrentUser } from '../services/authService';
 

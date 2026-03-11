@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { outsourcedBillboards, billboards as inventoryBillboards, addOutsourcedBillboard, updateOutsourcedBillboard, deleteOutsourcedBillboard } from '../services/mockData';
-import { OutsourcedBillboard } from '../types';
+import { OutsourcedBillboard } from '../types-billboard';
 import { Plus, X, Edit2, Globe, DollarSign, Calendar, Save, Trash2, AlertTriangle } from 'lucide-react';
 
 const MinimalSelect = ({ label, value, onChange, options }: any) => (

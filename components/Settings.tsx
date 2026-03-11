@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { getUsers, addUser, updateUser, deleteUser, getAuditLogs, getCompanyLogo, setCompanyLogo, getCompanyProfile, updateCompanyProfile, RELEASE_NOTES, resetSystemData, createSystemBackup, restoreSystemBackup, getLastManualBackupDate, getAutoBackupStatus, getStorageUsage, simulateCloudSync, getLastCloudBackupDate, triggerFullSync, verifyDataIntegrity, syncToSupabase } from '../services/mockData';
 import { generateAppFeaturesPDF, generateUserManualPDF } from '../services/pdfGenerator';
 import { Shield, Building, ScrollText, Download, Plus, X, Save, Phone, MapPin, Edit2, Trash2, AlertTriangle, Cloud, Upload, RefreshCw, Database, Clock, HardDrive, Sparkles, Loader2, CheckCircle, FileText, ChevronRight, Server, Wifi, Activity, Lock, Copy, FileCheck, Layers, Cpu, Code2, UserCheck, Users } from 'lucide-react';
-import { User as UserType, CompanyProfile } from '../types';
+import { User as UserType, CompanyProfile } from '../types-billboard';
 import { isSupabaseConfigured, checkSupabaseConnection } from '../services/supabaseClient';
 
 const MinimalInput = ({ label, value, onChange, type = "text", required = false, placeholder = "", disabled = false }: any) => (

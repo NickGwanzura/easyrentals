@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getClients, getContracts, getBillboards, getInvoices } from '../services/mockData';
-import { Client, Contract, Invoice, Billboard } from '../types';
+import { Client, Contract, Invoice, Billboard } from '../types-billboard';
 import { MapPin, Calendar, CreditCard, Clock, FileText, LayoutDashboard, Globe, AlertTriangle, ArrowRight, TrendingUp } from 'lucide-react';
 import { generateStatementPDF } from '../services/pdfGenerator';
 

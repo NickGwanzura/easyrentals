@@ -11,10 +11,9 @@ import StatusBadge from '@/components/ui/StatusBadge';
 import { 
   demoEstates, 
   demoEstateUnits, 
-  demoEstateLevies,
-  type EstateUnit,
-  type EstateUnitStatus 
+  demoEstateLevies
 } from '@/lib/mockData/estate-management';
+import type { EstateUnit, EstateUnitStatus } from '@/types';
 import { formatCurrency } from '@/lib/utils';
 import { 
   Home, 

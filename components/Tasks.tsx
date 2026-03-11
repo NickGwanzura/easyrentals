@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Task } from '../types';
+import { Task } from '../types-billboard';
 import { getTasks, addTask, updateTask, deleteTask, getUsers, getBillboards, updateBillboard } from '../services/mockData';
 import { CheckSquare, Plus, Trash2, Calendar, User, Clock, X, Save } from 'lucide-react';
 

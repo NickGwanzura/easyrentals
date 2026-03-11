@@ -247,6 +247,8 @@ export interface Payment {
 // Agent Types
 // ============================================================================
 
+export type AgentStatus = 'active' | 'inactive' | 'pending';
+
 export interface Agent {
   id: string;
   userId: string;
@@ -267,7 +269,7 @@ export interface Agent {
   totalDealsClosed?: number;
   
   // Status
-  status: 'active' | 'inactive' | 'pending';
+  status: AgentStatus;
   
   // Metadata
   createdAt: string;
@@ -451,3 +453,9 @@ export interface PaymentFilters {
   startDate?: string;
   endDate?: string;
 }
+
+// ============================================================================
+// Re-exports from estate-management
+// ============================================================================
+
+export * from './estate-management';

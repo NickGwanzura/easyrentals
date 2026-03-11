@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { getContracts, getBillboards, addContract, addInvoice, clients, deleteContract, subscribe } from '../services/mockData';
 import { generateContractPDF, generateActiveContractsPDF } from '../services/pdfGenerator';
 import { generateRentalProposal } from '../services/aiService';
-import { Contract, BillboardType, VAT_RATE, Invoice } from '../types';
+import { Contract, BillboardType, VAT_RATE, Invoice } from '../types-billboard';
 import { FileText, Calendar, Download, Eye, Plus, X, Wand2, RefreshCw, CheckCircle, Trash2, AlertTriangle, GanttChart, List, Lock } from 'lucide-react';
 
 const MinimalInput = ({ label, value, onChange, type = "text", required = false, disabled = false }: any) => {

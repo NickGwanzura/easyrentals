@@ -12,10 +12,9 @@ import {
   demoEstateMoveIns,
   demoEstateMoveOuts,
   demoEstates,
-  demoEstateUnits,
-  type EstateMoveIn,
-  type EstateMoveOut 
+  demoEstateUnits
 } from '@/lib/mockData/estate-management';
+import type { EstateMoveIn, EstateMoveOut } from '@/types';
 import { 
   ArrowRightLeft,
   ArrowUpRight,

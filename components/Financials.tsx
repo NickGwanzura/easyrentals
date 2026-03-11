@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { getInvoices, getContracts, clients, getBillboards, addInvoice, markInvoiceAsPaid, deleteInvoice } from '../services/mockData';
 import { generateInvoicePDF } from '../services/pdfGenerator';
 import { Download, Plus, X, Save, Link2, CreditCard, Search, Trash2 } from 'lucide-react';
-import { Invoice, VAT_RATE } from '../types';
+import { Invoice, VAT_RATE } from '../types-billboard';
 
 const MinimalInput = ({ label, value, onChange, type = "text", required = false }: any) => (
   <div className="group relative">

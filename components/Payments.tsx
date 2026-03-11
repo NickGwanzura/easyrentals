@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { getClients, getInvoices, getClientFinancials, getTransactions, getContracts, getBillboards, addInvoice, markInvoiceAsPaid, getUpcomingBillings, deleteInvoice } from '../services/mockData';
 import { generateStatementPDF, generatePaymentSchedulePDF } from '../services/pdfGenerator';
-import { Client, Invoice } from '../types';
+import { Client, Invoice } from '../types-billboard';
 import { DollarSign, FileText, Download, CheckCircle, AlertCircle, Search, CreditCard, X, Check, Filter, Hash, Wallet, Building, Clock, Calendar, Trash2 } from 'lucide-react';
 
 const MinimalInput = ({ label, value, onChange, type = "text", required = false, placeholder = "", icon: Icon }: any) => (

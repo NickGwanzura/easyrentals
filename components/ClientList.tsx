@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Client } from '../types';
+import { Client } from '../types-billboard';
 import { getClients, addClient, deleteClient, updateClient, getNextBillingDetails, subscribe } from '../services/mockData';
 import { generateClientDirectoryPDF } from '../services/pdfGenerator';
 import { Mail, Phone, MoreHorizontal, User, Plus, X, Save, Search, Trash2, AlertTriangle, Calendar, Clock, Edit2, CreditCard, Share2, Download } from 'lucide-react';

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { getExpenses, addExpense, printingJobs, getClients } from '../services/mockData';
 import { generateExpensesPDF } from '../services/pdfGenerator';
 import { Printer, TrendingDown, Plus, BarChart3, Scissors, Droplets, Zap, User, X, Save, Download } from 'lucide-react';
-import { PrintingJob, Expense } from '../types';
+import { PrintingJob, Expense } from '../types-billboard';
 
 const MinimalInput = ({ label, value, onChange, type = "text", placeholder }: any) => (
   <div className="group relative">

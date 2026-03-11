@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { getBillboards, getMaintenanceLogs, addMaintenanceLog, addExpense, getExpenses } from '../services/mockData';
-import { Billboard, MaintenanceLog, Expense } from '../types';
+import { Billboard, MaintenanceLog, Expense } from '../types-billboard';
 import { Wrench, Calendar, CheckCircle, AlertTriangle, Clock, Plus, X, Save, Search, MapPin, History, Hammer, FileText } from 'lucide-react';
 
 const MinimalInput = ({ label, value, onChange, type = "text", required = false }: any) => (

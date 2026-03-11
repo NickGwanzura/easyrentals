@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { contracts as initialContracts, clients, billboards, getContracts } from '../services/mockData';
 import { generateContractPDF } from '../services/pdfGenerator';
-import { Contract } from '../types';
+import { Contract } from '../types-billboard';
 import { FileText, Calendar, Download, X, Eye, Clock, Plus as PlusIcon } from 'lucide-react';
 
 export const ContractList: React.FC = () => {

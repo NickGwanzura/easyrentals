@@ -1,7 +1,7 @@
 
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { Invoice, Contract, Client, Expense, OutsourcedBillboard, Billboard } from '../types';
+import { Invoice, Contract, Client, Expense, OutsourcedBillboard, Billboard } from '../types-billboard';
 import { getCompanyProfile, getCompanyLogo } from './mockData';
 
 // Helper to safely execute autoTable regardless of import structure

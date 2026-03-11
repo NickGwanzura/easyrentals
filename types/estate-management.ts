@@ -21,6 +21,8 @@ export interface Estate {
   managerName?: string;
   managerPhone?: string;
   managerEmail?: string;
+  estateManagerName?: string;  // Alias for managerName
+  estateManagerPhone?: string; // Alias for managerPhone
   
   // Details
   totalUnits: number;
@@ -76,6 +78,7 @@ export type EstateUnitStatus = 'occupied' | 'vacant' | 'owner_occupied' | 'under
 export interface EstateUnit {
   id: string;
   estateId: string;
+  estateName?: string; // For display
   blockId?: string;
   blockName?: string; // For display
   
@@ -107,6 +110,7 @@ export interface EstateUnit {
   
   // Financial
   levyAmount?: number;
+  monthlyLevy?: number;  // Alias for levyAmount
   outstandingLevy: number;
   
   // Status
@@ -133,6 +137,7 @@ export interface EstateLevy {
   unitId: string;
   unitNumber?: string; // For display
   estateName?: string; // For display
+  blockName?: string; // For display
   
   // Period
   month: number;
@@ -151,6 +156,7 @@ export interface EstateLevy {
   
   // Payment
   paidDate?: string;
+  paymentDate?: string; // Alias for paidDate
   paymentMethod?: PaymentMethod;
   paymentReference?: string;
   
@@ -176,6 +182,8 @@ export interface EstateMoveIn {
   
   // Resident
   residentName: string;
+  residentPhone?: string;
+  residentEmail?: string;
   residentPhone?: string;
   residentEmail?: string;
   residentIdNumber?: string;

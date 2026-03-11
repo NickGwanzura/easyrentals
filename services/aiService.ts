@@ -1,6 +1,6 @@
 
 import { GoogleGenAI } from "@google/genai";
-import { Billboard, Client } from "../types";
+import { Billboard, Client } from "../types-billboard";
 
 declare var process: any;
 
