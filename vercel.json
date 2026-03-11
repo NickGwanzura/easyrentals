@@ -51,7 +51,6 @@
       "source": "/signin",
       "destination": "/login",
       "permanent": true
-    },
-
+    }
   ]
 }
