@@ -52,10 +52,6 @@
       "destination": "/login",
       "permanent": true
     },
-    {
-      "source": "/signup",
-      "destination": "/login?demo=true",
-      "permanent": false
-    }
+
   ]
 }

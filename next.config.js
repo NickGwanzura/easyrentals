@@ -10,6 +10,10 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   
+  // Build optimization
+  swcMinify: true,
+  productionBrowserSourceMaps: false,
+  
   // Image configuration
   images: {
     domains: [

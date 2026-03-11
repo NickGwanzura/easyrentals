@@ -27,7 +27,16 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/context';
 import { useBranding } from '@/lib/branding/context';
-import { extractColorsFromImage, generateBrandColors } from '@/lib/branding/colorExtractor';
+import { generateBrandColors } from '@/lib/branding/colorExtractor';
+
+// Dynamic import for color extraction to avoid build issues
+const extractColorsFromImage = async (imageUrl: string) => {
+  const { extractColorsFromImage: extract } = await import('@/lib/branding/colorExtractor');
+  return extract(imageUrl);
+};
+
+// Force dynamic rendering to avoid static generation issues
+export const dynamic = 'force-dynamic';
 import { BrandColors } from '@/types/branding';
 
 const tabs = [
