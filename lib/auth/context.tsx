@@ -2,27 +2,37 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, UserRole, AuthState } from '@/types';
-import { validateDemoCredentials, getDemoUserById, demoData } from '@/lib/mockData';
 import { useRouter, usePathname } from 'next/navigation';
+import { 
+  signIn as supabaseSignIn, 
+  signOut as supabaseSignOut, 
+  getCurrentUser,
+  onAuthStateChange,
+  SignInCredentials 
+} from '@/lib/supabase/auth';
+import { supabase } from '@/lib/supabase/client';
+import { validateDemoCredentials, getDemoUserById, demoData } from '@/lib/mockData';
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  logout: () => void;
+  logout: () => Promise<void>;
   enterDemoMode: (role: UserRole) => Promise<{ success: boolean; error?: string }>;
   hasRole: (roles: UserRole[]) => boolean;
   canAccess: (allowedRoles: UserRole[]) => boolean;
+  isSupabaseAuth: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const PUBLIC_PATHS = ['/landing', '/login'];
+const PUBLIC_PATHS = ['/landing', '/login', '/auth/callback', '/signup'];
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<AuthState>({
+  const [state, setState] = useState<AuthState & { isSupabaseAuth: boolean }>({
     user: null,
     isAuthenticated: false,
     isLoading: true,
     isDemoMode: false,
+    isSupabaseAuth: false,
   });
   
   const router = useRouter();
@@ -30,26 +40,107 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Check for stored auth on mount
   useEffect(() => {
-    const storedUser = localStorage.getItem('demoUser');
-    const isDemo = localStorage.getItem('isDemoMode') === 'true';
-    
-    if (storedUser) {
+    const checkAuth = async () => {
       try {
-        const user = JSON.parse(storedUser);
+        // First check for demo mode
+        const storedDemoUser = localStorage.getItem('demoUser');
+        const isDemo = localStorage.getItem('isDemoMode') === 'true';
+        
+        if (storedDemoUser && isDemo) {
+          const user = JSON.parse(storedDemoUser);
+          setState({
+            user,
+            isAuthenticated: true,
+            isLoading: false,
+            isDemoMode: true,
+            isSupabaseAuth: false,
+          });
+          return;
+        }
+
+        // Check Supabase session
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          // Get full user profile
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+
+          const user: User = {
+            id: session.user.id,
+            email: session.user.email!,
+            firstName: profile?.first_name || session.user.user_metadata.first_name || '',
+            lastName: profile?.last_name || session.user.user_metadata.last_name || '',
+            role: (profile?.role || session.user.user_metadata.role || 'tenant') as UserRole,
+            avatar: profile?.avatar_url || session.user.user_metadata.avatar_url || undefined,
+            phone: profile?.phone || session.user.user_metadata.phone || undefined,
+            createdAt: profile?.created_at || session.user.created_at,
+            updatedAt: profile?.updated_at,
+          };
+
+          setState({
+            user,
+            isAuthenticated: true,
+            isLoading: false,
+            isDemoMode: false,
+            isSupabaseAuth: true,
+          });
+        } else {
+          setState(prev => ({ ...prev, isLoading: false }));
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+        setState(prev => ({ ...prev, isLoading: false }));
+      }
+    };
+
+    checkAuth();
+
+    // Subscribe to auth changes
+    const subscription = onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+
+        const user: User = {
+          id: session.user.id,
+          email: session.user.email!,
+          firstName: profile?.first_name || session.user.user_metadata.first_name || '',
+          lastName: profile?.last_name || session.user.user_metadata.last_name || '',
+          role: (profile?.role || session.user.user_metadata.role || 'tenant') as UserRole,
+          avatar: profile?.avatar_url || session.user.user_metadata.avatar_url || undefined,
+          phone: profile?.phone || session.user.user_metadata.phone || undefined,
+          createdAt: profile?.created_at || session.user.created_at,
+          updatedAt: profile?.updated_at,
+        };
+
         setState({
           user,
           isAuthenticated: true,
           isLoading: false,
-          isDemoMode: isDemo,
+          isDemoMode: false,
+          isSupabaseAuth: true,
         });
-      } catch {
-        localStorage.removeItem('demoUser');
-        localStorage.removeItem('isDemoMode');
-        setState(prev => ({ ...prev, isLoading: false }));
+      } else if (event === 'SIGNED_OUT') {
+        setState({
+          user: null,
+          isAuthenticated: false,
+          isLoading: false,
+          isDemoMode: false,
+          isSupabaseAuth: false,
+        });
       }
-    } else {
-      setState(prev => ({ ...prev, isLoading: false }));
-    }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Handle route protection
@@ -68,45 +159,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [state.isAuthenticated, state.isLoading, pathname, router]);
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    const user = validateDemoCredentials(email, password);
-    
-    if (!user) {
-      return { success: false, error: 'Invalid email or password' };
+    try {
+      // First try demo credentials
+      const demoUser = validateDemoCredentials(email, password);
+      
+      if (demoUser) {
+        const isDemo = ['demo@admin.com', 'demo@agent.com', 'demo@tenant.com'].includes(email.toLowerCase());
+        
+        localStorage.setItem('demoUser', JSON.stringify(demoUser));
+        localStorage.setItem('isDemoMode', String(isDemo));
+        
+        setState({
+          user: demoUser,
+          isAuthenticated: true,
+          isLoading: false,
+          isDemoMode: isDemo,
+          isSupabaseAuth: false,
+        });
+        
+        return { success: true };
+      }
+
+      // Try Supabase auth
+      await supabaseSignIn({ email, password });
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Invalid email or password' };
     }
-    
-    const isDemo = Object.values({
-      admin: { email: 'demo@admin.com' },
-      agent: { email: 'demo@agent.com' },
-      tenant: { email: 'demo@tenant.com' },
-    }).some(cred => cred.email.toLowerCase() === email.toLowerCase());
-    
-    // Update localStorage first
-    localStorage.setItem('demoUser', JSON.stringify(user));
-    localStorage.setItem('isDemoMode', String(isDemo));
-    
-    // Then update state
-    setState({
-      user,
-      isAuthenticated: true,
-      isLoading: false,
-      isDemoMode: isDemo,
-    });
-    
-    return { success: true };
   };
 
-  const logout = () => {
+  const logout = async () => {
+    // Clear demo mode
+    localStorage.removeItem('demoUser');
+    localStorage.removeItem('isDemoMode');
+    
+    // Sign out from Supabase if using Supabase auth
+    if (state.isSupabaseAuth) {
+      await supabaseSignOut();
+    }
+    
     setState({
       user: null,
       isAuthenticated: false,
       isLoading: false,
       isDemoMode: false,
+      isSupabaseAuth: false,
     });
-    localStorage.removeItem('demoUser');
-    localStorage.removeItem('isDemoMode');
+    
     router.push('/login');
   };
 
