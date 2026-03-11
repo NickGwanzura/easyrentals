@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+
+export const dynamic = 'force-dynamic';
 import Link from 'next/link';
 import { Eye, EyeOff, Home, User, ArrowRight, Building2, Users } from 'lucide-react';
 import Button from '@/components/ui/Button';

@@ -2,6 +2,8 @@
 
 import React from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+
+export const dynamic = 'force-dynamic';
 import { useAuth, useRequireAuth, useDashboardData } from '@/lib/auth/context';
 import { useProperties, useTenants, usePayments } from '@/lib/auth/hooks';
 import StatCard from '@/components/dashboard/StatCard';
