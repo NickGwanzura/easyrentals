@@ -89,11 +89,6 @@ const nextConfig = {
   // React strict mode
   reactStrictMode: true,
   
-  // Experimental features
-  experimental: {
-    serverComponentsExternalPackages: [],
-  },
-  
   // Speed up build - skip static generation for problematic pages
   staticPageGenerationTimeout: 60,
 };

@@ -1,13 +1,18 @@
-import Vibrant from 'node-vibrant';
 import { ColorExtractionResult, BrandColors, rgbToHex, adjustBrightness, getContrastText } from '@/types/branding';
+
+// Dynamic import for node-vibrant (browser version)
+async function getVibrant() {
+  const Vibrant = await import('node-vibrant/browser');
+  return Vibrant;
+}
 
 /**
  * Extract colors from an image URL using node-vibrant
  */
 export async function extractColorsFromImage(imageUrl: string): Promise<ColorExtractionResult> {
   try {
-    const vibrant = new Vibrant(imageUrl);
-    const palette = await vibrant.getPalette();
+    const Vibrant = await getVibrant();
+    const palette = await Vibrant.from(imageUrl).getPalette();
     
     // Extract the main swatches
     const vibrantColor = palette.Vibrant?.hex || '#2563eb';
