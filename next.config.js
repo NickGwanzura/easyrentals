@@ -11,7 +11,6 @@ const nextConfig = {
   },
   
   // Build optimization
-  swcMinify: true,
   productionBrowserSourceMaps: false,
   
   // Image configuration
