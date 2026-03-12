@@ -25,6 +25,7 @@ import {
   Wallet,
   ArrowRightLeft,
   FileCheck,
+  ClipboardCheck,
 } from 'lucide-react';
 import { UserRole } from '@/types';
 
@@ -41,6 +42,7 @@ const navigation: NavItem[] = [
   { name: 'Tenants', href: '/tenants', icon: Users, roles: ['admin', 'landlord', 'agent'] },
   { name: 'Payments', href: '/payments', icon: CreditCard, roles: ['admin', 'landlord', 'tenant'] },
   { name: 'Leads', href: '/leads', icon: ClipboardList, roles: ['admin', 'landlord', 'agent'] },
+  { name: 'Inspections', href: '/inspections', icon: ClipboardCheck, roles: ['admin', 'landlord', 'agent'] },
   { name: 'Lease Reviews', href: '/lease-reviews', icon: FileCheck, roles: ['admin', 'landlord', 'agent'] },
   { name: 'Analytics', href: '/analytics', icon: BarChart3, roles: ['admin', 'landlord'] },
   { name: 'Settings', href: '/settings', icon: Settings, roles: ['admin', 'landlord', 'agent', 'tenant'] },
@@ -52,6 +54,7 @@ const estateManagementNav: NavItem[] = [
   { name: 'Units', href: '/estates/estate-units', icon: HomeIcon, roles: ['admin', 'landlord', 'agent'] },
   { name: 'Levies', href: '/levies', icon: Wallet, roles: ['admin', 'landlord', 'agent'] },
   { name: 'Moves', href: '/estate-moves', icon: ArrowRightLeft, roles: ['admin', 'landlord', 'agent'] },
+  { name: 'Inspections', href: '/inspections', icon: ClipboardCheck, roles: ['admin', 'landlord', 'agent'] },
 ];
 
 // Estate Accounting Navigation
