@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { User, UserRole, AuthState } from '@/types';
 import { useRouter, usePathname } from 'next/navigation';
 import { 
@@ -11,7 +11,20 @@ import {
   SignInCredentials 
 } from '@/lib/supabase/auth';
 import { supabase } from '@/lib/supabase/client';
-import { validateDemoCredentials, getDemoUserById, demoData } from '@/lib/mockData';
+import { validateDemoCredentials } from '@/lib/mockData';
+import type { Company } from '@/lib/whitelabel/server';
+import {
+  getAccountRecord,
+  mapAccountToUser,
+  syncAccountCompanyContext,
+} from './account-records';
+
+interface CompanyInfo {
+  id: string;
+  name: string;
+  slug: string;
+  role: string;
+}
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
@@ -20,11 +33,17 @@ interface AuthContextType extends AuthState {
   hasRole: (roles: UserRole[]) => boolean;
   canAccess: (allowedRoles: UserRole[]) => boolean;
   isSupabaseAuth: boolean;
+  // Company-related
+  currentCompany: CompanyInfo | null;
+  userCompanies: CompanyInfo[];
+  switchCompany: (companyId: string) => Promise<void>;
+  refreshCompanies: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const PUBLIC_PATHS = ['/landing', '/login', '/auth/callback', '/signup'];
+const PUBLIC_PATHS = ['/login', '/auth/callback', '/signup', '/signup/company', '/'];
+const DEMO_MODE_ENABLED = true;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState & { isSupabaseAuth: boolean }>({
@@ -35,14 +54,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isSupabaseAuth: false,
   });
   
+  const [currentCompany, setCurrentCompany] = useState<CompanyInfo | null>(null);
+  const [userCompanies, setUserCompanies] = useState<CompanyInfo[]>([]);
+  
   const router = useRouter();
   const pathname = usePathname();
+
+  // Load user's companies
+  const loadUserCompanies = useCallback(async (userId: string, preferredCompanyId?: string | null) => {
+    try {
+      const { data, error } = await supabase
+        .from('company_users')
+        .select(`
+          company_id,
+          role,
+          companies:company_id (id, name, slug)
+        `)
+        .eq('user_id', userId)
+        .eq('invitation_status', 'active');
+      
+      if (error) throw error;
+      
+      const companies = data?.map((item: any) => ({
+        id: item.companies.id,
+        name: item.companies.name,
+        slug: item.companies.slug,
+        role: item.role,
+      })) || [];
+      
+      setUserCompanies(companies);
+      
+      setCurrentCompany(prev => {
+        if (prev && companies.some(company => company.id === prev.id)) {
+          return prev;
+        }
+
+        if (preferredCompanyId) {
+          const preferredCompany = companies.find(company => company.id === preferredCompanyId);
+          if (preferredCompany) {
+            return preferredCompany;
+          }
+        }
+
+        return companies[0] || null;
+      });
+    } catch (error) {
+      console.error('Failed to load user companies:', error);
+    }
+  }, []);
 
   // Check for stored auth on mount
   useEffect(() => {
     const checkAuth = async () => {
+      if (typeof window === 'undefined') {
+        setState(prev => ({ ...prev, isLoading: false }));
+        return;
+      }
+      
       try {
-        // First check for demo mode
         const storedDemoUser = localStorage.getItem('demoUser');
         const isDemo = localStorage.getItem('isDemoMode') === 'true';
         
@@ -55,31 +124,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             isDemoMode: true,
             isSupabaseAuth: false,
           });
+          // Set default company for demo
+          setCurrentCompany({
+            id: '00000000-0000-0000-0000-000000000001',
+            name: 'Demo Company',
+            slug: 'default',
+            role: 'admin',
+          });
           return;
         }
 
-        // Check Supabase session
-        const { data: { session } } = await supabase.auth.getSession();
+        const sessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Session check timeout')), 5000)
+        );
+        const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]) as any;
         
         if (session?.user) {
-          // Get full user profile
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-
-          const user: User = {
-            id: session.user.id,
-            email: session.user.email!,
-            firstName: profile?.first_name || session.user.user_metadata.first_name || '',
-            lastName: profile?.last_name || session.user.user_metadata.last_name || '',
-            role: (profile?.role || session.user.user_metadata.role || 'tenant') as UserRole,
-            avatar: profile?.avatar_url || session.user.user_metadata.avatar_url || undefined,
-            phone: profile?.phone || session.user.user_metadata.phone || undefined,
-            createdAt: profile?.created_at || session.user.created_at,
-            updatedAt: profile?.updated_at,
-          };
+          const account = await getAccountRecord(session.user.id);
+          const user = mapAccountToUser(session.user, account);
 
           setState({
             user,
@@ -88,6 +151,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             isDemoMode: false,
             isSupabaseAuth: true,
           });
+          
+          // Load user's companies
+          await loadUserCompanies(user.id, account?.current_company_id || null);
         } else {
           setState(prev => ({ ...prev, isLoading: false }));
         }
@@ -99,26 +165,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     checkAuth();
 
-    // Subscribe to auth changes
+    if (typeof window === 'undefined') return;
+
     const subscription = onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-
-        const user: User = {
-          id: session.user.id,
-          email: session.user.email!,
-          firstName: profile?.first_name || session.user.user_metadata.first_name || '',
-          lastName: profile?.last_name || session.user.user_metadata.last_name || '',
-          role: (profile?.role || session.user.user_metadata.role || 'tenant') as UserRole,
-          avatar: profile?.avatar_url || session.user.user_metadata.avatar_url || undefined,
-          phone: profile?.phone || session.user.user_metadata.phone || undefined,
-          createdAt: profile?.created_at || session.user.created_at,
-          updatedAt: profile?.updated_at,
-        };
+        const account = await getAccountRecord(session.user.id);
+        const user = mapAccountToUser(session.user, account);
 
         setState({
           user,
@@ -127,6 +179,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isDemoMode: false,
           isSupabaseAuth: true,
         });
+        
+        await loadUserCompanies(user.id, account?.current_company_id || null);
       } else if (event === 'SIGNED_OUT') {
         setState({
           user: null,
@@ -135,33 +189,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isDemoMode: false,
           isSupabaseAuth: false,
         });
+        setCurrentCompany(null);
+        setUserCompanies([]);
       }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [loadUserCompanies]);
 
   // Handle route protection
   useEffect(() => {
     if (state.isLoading) return;
     
-    const isPublicPath = PUBLIC_PATHS.some(path => pathname?.startsWith(path));
+    // Root path is always public (landing page)
+    if (pathname === '/') return;
     
-    if (!state.isAuthenticated && !isPublicPath && pathname !== '/') {
+    const isPublicPath = PUBLIC_PATHS.some(path => 
+      pathname === path || pathname?.startsWith(path + '/')
+    );
+    
+    if (!state.isAuthenticated && !isPublicPath) {
       router.push('/login');
     }
     
-    if (state.isAuthenticated && (pathname === '/login' || pathname === '/')) {
+    if (state.isAuthenticated && pathname === '/login') {
       router.push('/dashboard');
     }
   }, [state.isAuthenticated, state.isLoading, pathname, router]);
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      // First try demo credentials
-      const demoUser = validateDemoCredentials(email, password);
+      const demoUser = DEMO_MODE_ENABLED ? validateDemoCredentials(email, password) : null;
       
       if (demoUser) {
         const isDemo = ['demo@admin.com', 'demo@agent.com', 'demo@tenant.com'].includes(email.toLowerCase());
@@ -177,10 +237,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isSupabaseAuth: false,
         });
         
+        setCurrentCompany({
+          id: '00000000-0000-0000-0000-000000000001',
+          name: 'Demo Company',
+          slug: 'default',
+          role: 'admin',
+        });
+        
         return { success: true };
       }
 
-      // Try Supabase auth
       await supabaseSignIn({ email, password });
       return { success: true };
     } catch (error: any) {
@@ -189,11 +255,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    // Clear demo mode
     localStorage.removeItem('demoUser');
     localStorage.removeItem('isDemoMode');
     
-    // Sign out from Supabase if using Supabase auth
     if (state.isSupabaseAuth) {
       await supabaseSignOut();
     }
@@ -205,11 +269,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isDemoMode: false,
       isSupabaseAuth: false,
     });
+    setCurrentCompany(null);
+    setUserCompanies([]);
     
     router.push('/login');
   };
 
   const enterDemoMode = async (role: UserRole): Promise<{ success: boolean; error?: string }> => {
+    if (!DEMO_MODE_ENABLED) {
+      return { success: false, error: 'Demo mode is disabled in this environment.' };
+    }
+
     let email: string;
     switch (role) {
       case 'admin':
@@ -238,6 +308,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return allowedRoles.includes(state.user.role);
   };
 
+  const switchCompany = async (companyId: string) => {
+    if (!state.user) return;
+    
+    try {
+      await syncAccountCompanyContext(state.user.id, companyId);
+      
+      // Update local state
+      const company = userCompanies.find(c => c.id === companyId);
+      if (company) {
+        setCurrentCompany(company);
+      }
+    } catch (error) {
+      console.error('Failed to switch company:', error);
+      throw error;
+    }
+  };
+
+  const refreshCompanies = async () => {
+    if (state.user) {
+      await loadUserCompanies(state.user.id);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -247,6 +340,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         enterDemoMode,
         hasRole,
         canAccess,
+        currentCompany,
+        userCompanies,
+        switchCompany,
+        refreshCompanies,
       }}
     >
       {children}
@@ -279,5 +376,4 @@ export function useRequireAuth(allowedRoles?: UserRole[]) {
   return auth;
 }
 
-// Re-export hooks from hooks.ts for convenience
 export { useDashboardData, useProperties, useTenants, usePayments } from './hooks';
