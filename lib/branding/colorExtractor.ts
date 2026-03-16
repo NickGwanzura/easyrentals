@@ -1,9 +1,138 @@
 import { ColorExtractionResult, BrandColors, rgbToHex, adjustBrightness, getContrastText } from '@/types/branding';
 
-// Dynamic import for node-vibrant (browser version)
-async function getVibrant() {
-  const Vibrant = await import('node-vibrant/browser');
-  return Vibrant;
+type RGB = {
+  r: number;
+  g: number;
+  b: number;
+};
+
+type PaletteColor = RGB & {
+  hex: string;
+  brightness: number;
+  saturation: number;
+  count: number;
+};
+
+const DEFAULT_EXTRACTION: ColorExtractionResult = {
+  primary: '#2563eb',
+  secondary: '#64748b',
+  accent: '#f59e0b',
+  background: '#ffffff',
+  darkText: '#0f172a',
+  lightText: '#ffffff',
+  palette: ['#2563eb', '#64748b', '#f59e0b', '#1e293b', '#f8fafc'],
+};
+
+function componentToHex(value: number): string {
+  return Math.max(0, Math.min(255, Math.round(value))).toString(16).padStart(2, '0');
+}
+
+function toHex({ r, g, b }: RGB): string {
+  return `#${componentToHex(r)}${componentToHex(g)}${componentToHex(b)}`;
+}
+
+function toBrightness({ r, g, b }: RGB): number {
+  return (r * 299 + g * 587 + b * 114) / 1000;
+}
+
+function toSaturation({ r, g, b }: RGB): number {
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  if (max === 0) return 0;
+  return (max - min) / max;
+}
+
+function quantize(value: number): number {
+  return Math.round(value / 32) * 32;
+}
+
+async function extractPalette(imageUrl: string): Promise<PaletteColor[]> {
+  if (typeof window === 'undefined') {
+    return [];
+  }
+
+  return new Promise((resolve, reject) => {
+    const image = new window.Image();
+    image.crossOrigin = 'anonymous';
+
+    image.onload = () => {
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d', { willReadFrequently: true });
+
+      if (!context) {
+        reject(new Error('Unable to read image colors.'));
+        return;
+      }
+
+      const maxDimension = 64;
+      const scale = Math.min(1, maxDimension / Math.max(image.naturalWidth || image.width, image.naturalHeight || image.height));
+      canvas.width = Math.max(1, Math.round((image.naturalWidth || image.width) * scale));
+      canvas.height = Math.max(1, Math.round((image.naturalHeight || image.height) * scale));
+
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+      const { data } = context.getImageData(0, 0, canvas.width, canvas.height);
+      const buckets = new Map<string, { r: number; g: number; b: number; count: number }>();
+
+      for (let index = 0; index < data.length; index += 16) {
+        const alpha = data[index + 3];
+        if (alpha < 125) continue;
+
+        const r = data[index];
+        const g = data[index + 1];
+        const b = data[index + 2];
+        const brightness = toBrightness({ r, g, b });
+
+        if (brightness > 245 || brightness < 12) {
+          continue;
+        }
+
+        const key = `${quantize(r)}-${quantize(g)}-${quantize(b)}`;
+        const bucket = buckets.get(key) || { r: 0, g: 0, b: 0, count: 0 };
+        bucket.r += r;
+        bucket.g += g;
+        bucket.b += b;
+        bucket.count += 1;
+        buckets.set(key, bucket);
+      }
+
+      const palette = Array.from(buckets.values())
+        .filter(bucket => bucket.count > 0)
+        .map((bucket) => {
+          const color = {
+            r: bucket.r / bucket.count,
+            g: bucket.g / bucket.count,
+            b: bucket.b / bucket.count,
+          };
+
+          return {
+            ...color,
+            hex: toHex(color),
+            brightness: toBrightness(color),
+            saturation: toSaturation(color),
+            count: bucket.count,
+          };
+        })
+        .sort((left, right) => right.count - left.count)
+        .slice(0, 8);
+
+      resolve(palette);
+    };
+
+    image.onerror = () => reject(new Error('Unable to load image for color extraction.'));
+    image.src = imageUrl;
+  });
+}
+
+function pickColor(
+  palette: PaletteColor[],
+  selector: (paletteColor: PaletteColor) => number
+): PaletteColor | null {
+  if (palette.length === 0) {
+    return null;
+  }
+
+  return [...palette].sort((left, right) => selector(right) - selector(left))[0];
 }
 
 /**
@@ -11,29 +140,38 @@ async function getVibrant() {
  */
 export async function extractColorsFromImage(imageUrl: string): Promise<ColorExtractionResult> {
   try {
-    const Vibrant = await getVibrant();
-    const palette = await Vibrant.from(imageUrl).getPalette();
-    
-    // Extract the main swatches
-    const vibrantColor = palette.Vibrant?.hex || '#2563eb';
-    const mutedColor = palette.Muted?.hex || '#64748b';
-    const darkVibrant = palette.DarkVibrant?.hex || '#1d4ed8';
-    const lightVibrant = palette.LightVibrant?.hex || '#3b82f6';
-    const darkMuted = palette.DarkMuted?.hex || '#1e293b';
-    const lightMuted = palette.LightVibrant?.hex || '#f8fafc';
+    const palette = await extractPalette(imageUrl);
+
+    if (palette.length === 0) {
+      return DEFAULT_EXTRACTION;
+    }
+
+    const vibrant = pickColor(palette, (color) => color.saturation * 100 + color.count);
+    const muted = pickColor(palette, (color) => (1 - color.saturation) * 100 + color.count);
+    const darkVibrant = pickColor(palette, (color) => color.saturation * 100 + (255 - color.brightness));
+    const lightVibrant = pickColor(palette, (color) => color.saturation * 100 + color.brightness);
+    const darkMuted = pickColor(palette, (color) => (1 - color.saturation) * 100 + (255 - color.brightness));
+    const lightMuted = pickColor(palette, (color) => (1 - color.saturation) * 100 + color.brightness);
+
+    const vibrantColor = vibrant?.hex || DEFAULT_EXTRACTION.primary;
+    const mutedColor = muted?.hex || DEFAULT_EXTRACTION.secondary;
+    const darkVibrantColor = darkVibrant?.hex || adjustBrightness(vibrantColor, -15);
+    const lightVibrantColor = lightVibrant?.hex || adjustBrightness(vibrantColor, 15);
+    const darkMutedColor = darkMuted?.hex || '#1e293b';
+    const lightMutedColor = lightMuted?.hex || '#f8fafc';
     
     // Build a full palette
     const fullPalette = [
       vibrantColor,
       mutedColor,
-      darkVibrant,
-      lightVibrant,
-      darkMuted,
-      lightMuted,
+      darkVibrantColor,
+      lightVibrantColor,
+      darkMutedColor,
+      lightMutedColor,
     ];
     
     // Add additional variations
-    if (palette.Vibrant) {
+    if (vibrant) {
       fullPalette.push(
         adjustBrightness(vibrantColor, 20),
         adjustBrightness(vibrantColor, -20)
@@ -43,24 +181,15 @@ export async function extractColorsFromImage(imageUrl: string): Promise<ColorExt
     return {
       primary: vibrantColor,
       secondary: mutedColor,
-      accent: darkVibrant,
+      accent: darkVibrantColor,
       background: '#ffffff',
-      darkText: darkMuted,
+      darkText: darkMutedColor,
       lightText: '#ffffff',
       palette: fullPalette,
     };
   } catch (error) {
     console.error('Failed to extract colors:', error);
-    // Return default colors on error
-    return {
-      primary: '#2563eb',
-      secondary: '#64748b',
-      accent: '#f59e0b',
-      background: '#ffffff',
-      darkText: '#0f172a',
-      lightText: '#ffffff',
-      palette: ['#2563eb', '#64748b', '#f59e0b', '#1e293b', '#f8fafc'],
-    };
+    return DEFAULT_EXTRACTION;
   }
 }
 

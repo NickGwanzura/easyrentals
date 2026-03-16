@@ -30,12 +30,6 @@
       ]
     }
   ],
-  "rewrites": [
-    {
-      "source": "/",
-      "destination": "/login"
-    }
-  ],
   "redirects": [
     {
       "source": "/landing",

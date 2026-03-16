@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState, useRef } from 'react';
+import Link from 'next/link';
 import { getBillboards, getCompanyLogo } from '../services/mockData';
 import { Billboard } from '../types-billboard';
 import L from 'leaflet';
@@ -121,9 +122,9 @@ export const PublicView: React.FC<PublicViewProps> = ({ type, billboardId }) => 
                             <Layers size={14}/> View Full Map
                         </a>
                     )}
-                    <a href="/" className="px-4 py-2 bg-slate-900 text-white text-xs font-bold uppercase tracking-wider rounded-xl hover:bg-slate-800 transition-colors flex items-center gap-2">
+                    <Link href="/" className="px-4 py-2 bg-slate-900 text-white text-xs font-bold uppercase tracking-wider rounded-xl hover:bg-slate-800 transition-colors flex items-center gap-2">
                         Login <ExternalLink size={12} />
-                    </a>
+                    </Link>
                 </div>
             </div>
 

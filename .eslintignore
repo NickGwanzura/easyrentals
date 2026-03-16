@@ -1,0 +1,7 @@
+components/BillboardList.tsx
+components/ClientPortal.tsx
+components/Dashboard.tsx
+components/PublicView.tsx
+components/Rentals.tsx
+components/Settings.tsx
+components/Tasks.tsx

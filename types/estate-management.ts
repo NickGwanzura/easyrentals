@@ -94,6 +94,7 @@ export interface EstateUnit {
   
   // Owner
   ownerId?: string;
+  ownerUserId?: string;
   ownerName?: string;
   ownerPhone?: string;
   ownerEmail?: string;
@@ -107,6 +108,10 @@ export interface EstateUnit {
   
   // Rental Link
   rentalPropertyId?: string;
+  monthlyRent?: number;
+  securityDeposit?: number;
+  leaseStartDate?: string;
+  leaseEndDate?: string;
   
   // Financial
   levyAmount?: number;
@@ -184,8 +189,6 @@ export interface EstateMoveIn {
   residentName: string;
   residentPhone?: string;
   residentEmail?: string;
-  residentPhone?: string;
-  residentEmail?: string;
   residentIdNumber?: string;
   
   // Move In Details
@@ -245,6 +248,8 @@ export interface EstateMoveOut {
   
   // Resident
   residentName: string;
+  residentPhone?: string;
+  residentEmail?: string;
   
   // Notice
   noticeDate?: string;

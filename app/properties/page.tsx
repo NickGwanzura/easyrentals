@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import Image from 'next/image';
 import { useRequireAuth, useProperties } from '@/lib/auth/context';
 import { usePermission } from '@/lib/auth/hooks';
 import Card from '@/components/ui/Card';
@@ -145,10 +146,12 @@ function PropertyCard({ property }: { property: Property }) {
       {/* Image */}
       <div className="h-48 bg-slate-200 relative">
         {property.featuredImage ? (
-          <img 
-            src={property.featuredImage} 
-            alt={property.title} 
-            className="w-full h-full object-cover"
+          <Image
+            src={property.featuredImage}
+            alt={property.title}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-slate-100">

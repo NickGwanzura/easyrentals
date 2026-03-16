@@ -11,7 +11,8 @@ import { useRequireAuth } from '@/lib/auth/context';
 import { useToast } from '@/components/ui/Toast';
 import { InspectionType } from '@/types/inspections';
 import { demoData } from '@/lib/mockData';
-import { demoEstates, demoEstateUnits, EstateUnit } from '@/lib/mockData/estate-management';
+import { demoEstates, demoEstateUnits } from '@/lib/mockData/estate-management';
+import type { EstateUnit } from '@/types';
 import { 
   ArrowLeft,
   Calendar,

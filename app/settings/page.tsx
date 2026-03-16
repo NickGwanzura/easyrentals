@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useCallback } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import Image from 'next/image';
 import { useRequireAuth } from '@/lib/auth/context';
 import { usePermission } from '@/lib/auth/hooks';
 import Card, { CardHeader } from '@/components/ui/Card';
@@ -219,10 +220,12 @@ function BrandingSettings() {
                 
                 {branding.logoUrl ? (
                   <div className="space-y-4">
-                    <img 
-                      src={branding.logoUrl} 
-                      alt="Agency Logo" 
-                      className="max-h-32 mx-auto object-contain"
+                    <Image
+                      src={branding.logoUrl}
+                      alt="Agency Logo"
+                      width={192}
+                      height={128}
+                      className="max-h-32 mx-auto w-auto object-contain"
                     />
                     <p className="text-sm text-slate-500">
                       Click to replace logo
@@ -304,7 +307,13 @@ function BrandingSettings() {
                 >
                   <div className="flex items-center gap-4 mb-4">
                     {branding.logoUrl && (
-                      <img src={branding.logoUrl} alt="" className="h-10 object-contain" />
+                      <Image
+                        src={branding.logoUrl}
+                        alt={`${branding.agencyName} logo preview`}
+                        width={120}
+                        height={40}
+                        className="h-10 w-auto object-contain"
+                      />
                     )}
                     <div>
                       <h5 style={{ color: colors.text }} className="font-bold">
@@ -498,7 +507,13 @@ function ProfileSettings({ user }: { user: any }) {
             style={{ backgroundColor: 'var(--brand-primary)' + '20' }}
           >
             {user.avatar ? (
-              <img src={user.avatar} alt={user.firstName} className="w-20 h-20 rounded-full object-cover" />
+              <Image
+                src={user.avatar}
+                alt={user.firstName}
+                width={80}
+                height={80}
+                className="w-20 h-20 rounded-full object-cover"
+              />
             ) : (
               <span 
                 className="text-2xl font-bold"

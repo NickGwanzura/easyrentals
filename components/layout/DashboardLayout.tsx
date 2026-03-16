@@ -25,13 +25,6 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
         <Sidebar />
       </div>
 
-      {/* Demo Banner for Mobile */}
-      {isDemoMode && (
-        <div className="lg:hidden fixed top-16 left-0 right-0 z-20 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-medium py-2 px-4 text-center shadow-md">
-          🎮 Demo Mode - Data resets on refresh
-        </div>
-      )}
-
       {/* Main Content */}
       <div className={cn(
         "lg:ml-64 transition-all duration-300",
@@ -42,7 +35,7 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
         
         <main className={cn(
           "p-4 lg:p-8",
-          isDemoMode ? "pt-24 lg:pt-24" : "pt-20 lg:pt-20"
+          isDemoMode ? "pt-20 lg:pt-24" : "pt-20 lg:pt-20"
         )}>
           <div className="max-w-7xl mx-auto animate-fade-in">
             {children}

@@ -478,7 +478,7 @@ demoEstateUnits.slice(0, 20).forEach((unit) => {
     id: `statement-${statementIdCounter}`,
     estateId: unit.estateId,
     unitId: unit.id,
-    ownerId: unit.ownerId,
+    ownerId: unit.ownerId || `owner-${unit.id}`,
     ownerName: unit.ownerName,
     unitNumber: unit.unitNumber,
     month,

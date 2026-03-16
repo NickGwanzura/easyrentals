@@ -32,7 +32,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    // Skip during SSR/static generation
+    if (typeof window !== 'undefined') {
+      setMounted(true);
+    }
   }, []);
 
   const showToast = useCallback((message: string, type: ToastType = 'success') => {

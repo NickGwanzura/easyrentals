@@ -2,96 +2,73 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth/context';
+import { useBranding } from '@/lib/branding/context';
 import {
-  LayoutDashboard,
-  Building2,
-  Users,
-  CreditCard,
-  Settings,
+  adminAccountingNavigation,
+  estateAccountingNavigation,
+  estateManagementNavigation,
+  primaryNavigation,
+} from './navigation';
+import {
   LogOut,
   Home,
   UserCircle,
-  ClipboardList,
-  BarChart3,
-  Landmark,
-  Receipt,
-  DollarSign,
-  FileText,
-  MapPin,
-  HomeIcon,
-  Wallet,
-  ArrowRightLeft,
-  FileCheck,
-  ClipboardCheck,
 } from 'lucide-react';
-import { UserRole } from '@/types';
-
-interface NavItem {
-  name: string;
-  href: string;
-  icon: React.ElementType;
-  roles: UserRole[];
-}
-
-const navigation: NavItem[] = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['admin', 'landlord', 'agent', 'tenant'] },
-  { name: 'Properties', href: '/properties', icon: Building2, roles: ['admin', 'landlord', 'agent'] },
-  { name: 'Tenants', href: '/tenants', icon: Users, roles: ['admin', 'landlord', 'agent'] },
-  { name: 'Payments', href: '/payments', icon: CreditCard, roles: ['admin', 'landlord', 'tenant'] },
-  { name: 'Leads', href: '/leads', icon: ClipboardList, roles: ['admin', 'landlord', 'agent'] },
-  { name: 'Inspections', href: '/inspections', icon: ClipboardCheck, roles: ['admin', 'landlord', 'agent'] },
-  { name: 'Lease Reviews', href: '/lease-reviews', icon: FileCheck, roles: ['admin', 'landlord', 'agent'] },
-  { name: 'Analytics', href: '/analytics', icon: BarChart3, roles: ['admin', 'landlord'] },
-  { name: 'Settings', href: '/settings', icon: Settings, roles: ['admin', 'landlord', 'agent', 'tenant'] },
-];
-
-// Estate Management Navigation
-const estateManagementNav: NavItem[] = [
-  { name: 'Estates', href: '/estates', icon: MapPin, roles: ['admin', 'landlord', 'agent'] },
-  { name: 'Units', href: '/estates/estate-units', icon: HomeIcon, roles: ['admin', 'landlord', 'agent'] },
-  { name: 'Levies', href: '/levies', icon: Wallet, roles: ['admin', 'landlord', 'agent'] },
-  { name: 'Moves', href: '/estate-moves', icon: ArrowRightLeft, roles: ['admin', 'landlord', 'agent'] },
-  { name: 'Inspections', href: '/inspections', icon: ClipboardCheck, roles: ['admin', 'landlord', 'agent'] },
-];
-
-// Estate Accounting Navigation
-const estateAccountingNav: NavItem[] = [
-  { name: 'Estate Finance', href: '/estates/finance', icon: Landmark, roles: ['admin', 'landlord'] },
-  { name: 'Budget', href: '/estates/budget', icon: BarChart3, roles: ['admin', 'landlord'] },
-  { name: 'Expenses', href: '/estate-expenses', icon: DollarSign, roles: ['admin', 'landlord'] },
-  { name: 'Arrears', href: '/estates/arrears', icon: Receipt, roles: ['admin', 'landlord'] },
-  { name: 'Statements', href: '/owners/statements', icon: FileText, roles: ['admin', 'landlord'] },
-  { name: 'Reports', href: '/estates/reports', icon: BarChart3, roles: ['admin', 'landlord'] },
-];
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { user, logout, isDemoMode } = useAuth();
+  const { branding } = useBranding();
 
-  const filteredNav = navigation.filter(item => 
+  const filteredNav = primaryNavigation.filter(item => 
     user && item.roles.includes(user.role)
   );
   
-  const filteredEstateManagementNav = estateManagementNav.filter(item => 
+  const filteredEstateManagementNav = estateManagementNavigation.filter(item => 
     user && item.roles.includes(user.role)
   );
   
-  const filteredEstateAccountingNav = estateAccountingNav.filter(item => 
+  const filteredEstateAccountingNav = estateAccountingNavigation.filter(item =>
     user && item.roles.includes(user.role)
   );
+
+  const filteredAdminAccountingNav = adminAccountingNavigation.filter(item =>
+    user && item.roles.includes(user.role)
+  );
+
+  // Get logo based on branding
+  const logoUrl = branding.logoUrl;
+  const companyName = branding.agencyName;
+  const primaryColor = branding.colors.primary;
 
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-white border-r border-slate-200 flex flex-col">
       {/* Logo */}
       <div className="h-16 flex items-center px-6 border-b border-slate-100">
         <Link href="/dashboard" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-            <Home className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-xl font-bold text-slate-900">EazyRentals</span>
+          {logoUrl ? (
+            <Image
+              src={logoUrl}
+              alt={companyName}
+              width={120}
+              height={32}
+              className="h-8 w-auto object-contain"
+            />
+          ) : (
+            <div 
+              className="w-8 h-8 rounded-lg flex items-center justify-center"
+              style={{ backgroundColor: primaryColor }}
+            >
+              <Home className="w-5 h-5 text-white" />
+            </div>
+          )}
+          <span className="text-xl font-bold text-slate-900 truncate">
+            {companyName}
+          </span>
         </Link>
       </div>
 
@@ -106,11 +83,17 @@ export default function Sidebar() {
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
                 isActive
-                  ? 'bg-primary-50 text-primary-700'
+                  ? 'text-[var(--brand-primary)]'
                   : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
               )}
+              style={{
+                backgroundColor: isActive ? `${primaryColor}15` : undefined,
+              }}
             >
-              <item.icon className={cn('w-5 h-5', isActive ? 'text-primary-600' : 'text-slate-400')} />
+              <item.icon 
+                className={cn('w-5 h-5')} 
+                style={{ color: isActive ? primaryColor : undefined }}
+              />
               {item.name}
             </Link>
           );
@@ -133,11 +116,45 @@ export default function Sidebar() {
                   className={cn(
                     'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
                     isActive
-                      ? 'bg-primary-50 text-primary-700'
+                      ? 'text-[var(--brand-primary)]'
                       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   )}
+                  style={{
+                    backgroundColor: isActive ? `${primaryColor}15` : undefined,
+                  }}
                 >
-                  <item.icon className={cn('w-5 h-5', isActive ? 'text-primary-600' : 'text-slate-400')} />
+                  <item.icon 
+                    className={cn('w-5 h-5')} 
+                    style={{ color: isActive ? primaryColor : undefined }}
+                  />
+                  {item.name}
+                </Link>
+              );
+            })}
+          </>
+        )}
+
+        {/* Admin Accounting */}
+        {filteredAdminAccountingNav.length > 0 && (
+          <>
+            <div className="pt-4 mt-4 border-t border-slate-100">
+              <p className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                Accounting
+              </p>
+            </div>
+            {filteredAdminAccountingNav.map((item) => {
+              const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={cn(
+                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
+                    isActive ? 'text-[var(--brand-primary)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  )}
+                  style={{ backgroundColor: isActive ? `${primaryColor}15` : undefined }}
+                >
+                  <item.icon className="w-5 h-5" style={{ color: isActive ? primaryColor : undefined }} />
                   {item.name}
                 </Link>
               );
@@ -162,11 +179,17 @@ export default function Sidebar() {
                   className={cn(
                     'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
                     isActive
-                      ? 'bg-primary-50 text-primary-700'
+                      ? 'text-[var(--brand-primary)]'
                       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   )}
+                  style={{
+                    backgroundColor: isActive ? `${primaryColor}15` : undefined,
+                  }}
                 >
-                  <item.icon className={cn('w-5 h-5', isActive ? 'text-primary-600' : 'text-slate-400')} />
+                  <item.icon 
+                    className={cn('w-5 h-5')} 
+                    style={{ color: isActive ? primaryColor : undefined }}
+                  />
                   {item.name}
                 </Link>
               );
@@ -178,11 +201,20 @@ export default function Sidebar() {
       {/* User Section */}
       <div className="p-4 border-t border-slate-100">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
+          <div 
+            className="w-10 h-10 rounded-full flex items-center justify-center"
+            style={{ backgroundColor: `${primaryColor}20` }}
+          >
             {user?.avatar ? (
-              <img src={user.avatar} alt={user.firstName} className="w-10 h-10 rounded-full object-cover" />
+              <Image
+                src={user.avatar}
+                alt={user.firstName}
+                width={40}
+                height={40}
+                className="w-10 h-10 rounded-full object-cover"
+              />
             ) : (
-              <UserCircle className="w-6 h-6 text-primary-600" />
+              <UserCircle className="w-6 h-6" style={{ color: primaryColor }} />
             )}
           </div>
           <div className="flex-1 min-w-0">

@@ -2,27 +2,23 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { 
   Menu, 
   X, 
   Home, 
-  Building2, 
-  Users, 
-  CreditCard, 
-  DollarSign, 
-  FileText,
-  Settings,
   LogOut,
-  Landmark,
-  Receipt,
-  BarChart3,
-  ClipboardList,
   UserCircle,
-  FileCheck,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/context';
+import { useBranding } from '@/lib/branding/context';
 import { cn } from '@/lib/utils';
+import {
+  estateAccountingNavigation,
+  estateManagementNavigation,
+  primaryNavigation,
+} from './navigation';
 
 interface MenuItemProps {
   icon: React.ReactNode;
@@ -53,7 +49,30 @@ function MenuItem({ icon, label, href, close, isActive }: MenuItemProps) {
 export default function MobileSidebar() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const { user, logout, isDemoMode } = useAuth();
+  const { branding } = useBranding();
+
+  const filteredNav = primaryNavigation.filter(item =>
+    user && item.roles.includes(user.role)
+  );
+  const filteredEstateManagementNav = estateManagementNavigation.filter(item =>
+    user && item.roles.includes(user.role)
+  );
+  const filteredEstateAccountingNav = estateAccountingNavigation.filter(item =>
+    user && item.roles.includes(user.role)
+  );
+
+  const logoUrl = branding.logoUrl;
+  const companyName = branding.agencyName;
+  const primaryColor = branding.colors.primary;
+  const allNavItems = [
+    ...primaryNavigation,
+    ...estateManagementNavigation,
+    ...estateAccountingNavigation,
+  ];
+  const currentPage = allNavItems.find(item =>
+    pathname === item.href || pathname?.startsWith(`${item.href}/`)
+  );
 
   const isActive = (href: string) => {
     return pathname === href || pathname?.startsWith(`${href}/`);
@@ -67,19 +86,31 @@ export default function MobileSidebar() {
   return (
     <>
       {/* Top Bar */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between p-4 border-b bg-white">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between gap-3 border-b bg-white px-4 py-3">
         <button
           onClick={() => setOpen(true)}
-          className="p-2 rounded-lg hover:bg-slate-100 transition"
+          className="flex h-11 w-11 items-center justify-center rounded-xl hover:bg-slate-100 transition"
+          aria-label="Open navigation menu"
         >
           <Menu size={22} className="text-slate-600" />
         </button>
 
-        <div className="font-bold text-lg text-slate-900">
-          EazyRentals
+        <div className="min-w-0 flex-1 text-center">
+          <p className="truncate text-[11px] font-medium uppercase tracking-[0.18em] text-slate-400">
+            {companyName}
+          </p>
+          <p className="truncate text-base font-semibold text-slate-900">
+            {currentPage?.name || 'Dashboard'}
+          </p>
         </div>
 
-        <div className="w-10" />
+        {isDemoMode ? (
+          <div className="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-700">
+            Demo
+          </div>
+        ) : (
+          <div className="w-11" />
+        )}
       </div>
 
       {/* Overlay */}
@@ -101,15 +132,29 @@ export default function MobileSidebar() {
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-100">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-              <Home className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-bold text-lg text-slate-900">EazyRentals</span>
+            {logoUrl ? (
+              <Image
+                src={logoUrl}
+                alt={companyName}
+                width={120}
+                height={32}
+                className="h-8 w-auto object-contain"
+              />
+            ) : (
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center"
+                style={{ backgroundColor: primaryColor }}
+              >
+                <Home className="w-5 h-5 text-white" />
+              </div>
+            )}
+            <span className="font-bold text-lg text-slate-900">{companyName}</span>
           </div>
 
           <button
             onClick={() => setOpen(false)}
-            className="p-2 rounded-lg hover:bg-slate-100 transition"
+            className="flex h-11 w-11 items-center justify-center rounded-xl hover:bg-slate-100 transition"
+            aria-label="Close navigation menu"
           >
             <X size={20} className="text-slate-600" />
           </button>
@@ -120,7 +165,7 @@ export default function MobileSidebar() {
           <div className="p-4 border-b border-slate-100 bg-slate-50">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
-                <UserCircle className="w-6 h-6 text-primary-600" />
+                <UserCircle className="w-6 h-6" style={{ color: primaryColor }} />
               </div>
               <div>
                 <p className="font-medium text-slate-900">{user.firstName} {user.lastName}</p>
@@ -137,119 +182,52 @@ export default function MobileSidebar() {
             Main
           </p>
 
-          <MenuItem
-            icon={<Home size={18} />}
-            label="Dashboard"
-            href="/dashboard"
-            close={() => setOpen(false)}
-            isActive={isActive('/dashboard')}
-          />
+          {filteredNav.map((item) => (
+            <MenuItem
+              key={item.name}
+              icon={<item.icon size={18} />}
+              label={item.name}
+              href={item.href}
+              close={() => setOpen(false)}
+              isActive={isActive(item.href)}
+            />
+          ))}
 
-          <MenuItem
-            icon={<Building2 size={18} />}
-            label="Properties"
-            href="/properties"
-            close={() => setOpen(false)}
-            isActive={isActive('/properties')}
-          />
+          {filteredEstateManagementNav.length > 0 && (
+            <>
+              <p className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-4">
+                Estate Management
+              </p>
+              {filteredEstateManagementNav.map((item) => (
+                <MenuItem
+                  key={item.name}
+                  icon={<item.icon size={18} />}
+                  label={item.name}
+                  href={item.href}
+                  close={() => setOpen(false)}
+                  isActive={isActive(item.href)}
+                />
+              ))}
+            </>
+          )}
 
-          <MenuItem
-            icon={<Users size={18} />}
-            label="Tenants"
-            href="/tenants"
-            close={() => setOpen(false)}
-            isActive={isActive('/tenants')}
-          />
-
-          <MenuItem
-            icon={<CreditCard size={18} />}
-            label="Payments"
-            href="/payments"
-            close={() => setOpen(false)}
-            isActive={isActive('/payments')}
-          />
-
-          <MenuItem
-            icon={<ClipboardList size={18} />}
-            label="Leads"
-            href="/leads"
-            close={() => setOpen(false)}
-            isActive={isActive('/leads')}
-          />
-
-          <MenuItem
-            icon={<FileCheck size={18} />}
-            label="Lease Reviews"
-            href="/lease-reviews"
-            close={() => setOpen(false)}
-            isActive={isActive('/lease-reviews')}
-          />
-
-          {/* Estate Accounting Section */}
-          <p className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-4">
-            Estate Accounting
-          </p>
-
-          <MenuItem
-            icon={<Landmark size={18} />}
-            label="Finance Dashboard"
-            href="/estates/finance"
-            close={() => setOpen(false)}
-            isActive={isActive('/estates/finance')}
-          />
-
-          <MenuItem
-            icon={<BarChart3 size={18} />}
-            label="Budget"
-            href="/estates/budget"
-            close={() => setOpen(false)}
-            isActive={isActive('/estates/budget')}
-          />
-
-          <MenuItem
-            icon={<DollarSign size={18} />}
-            label="Expenses"
-            href="/estate-expenses"
-            close={() => setOpen(false)}
-            isActive={isActive('/estate-expenses')}
-          />
-
-          <MenuItem
-            icon={<Receipt size={18} />}
-            label="Levy Arrears"
-            href="/estates/arrears"
-            close={() => setOpen(false)}
-            isActive={isActive('/estates/arrears')}
-          />
-
-          <MenuItem
-            icon={<FileText size={18} />}
-            label="Owner Statements"
-            href="/owners/statements"
-            close={() => setOpen(false)}
-            isActive={isActive('/owners/statements')}
-          />
-
-          <MenuItem
-            icon={<BarChart3 size={18} />}
-            label="Reports"
-            href="/estates/reports"
-            close={() => setOpen(false)}
-            isActive={isActive('/estates/reports')}
-          />
-
-          {/* Settings */}
-          <p className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-4">
-            System
-          </p>
-
-          <MenuItem
-            icon={<Settings size={18} />}
-            label="Settings"
-            href="/settings"
-            close={() => setOpen(false)}
-            isActive={isActive('/settings')}
-          />
+          {filteredEstateAccountingNav.length > 0 && (
+            <>
+              <p className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-4">
+                Estate Accounting
+              </p>
+              {filteredEstateAccountingNav.map((item) => (
+                <MenuItem
+                  key={item.name}
+                  icon={<item.icon size={18} />}
+                  label={item.name}
+                  href={item.href}
+                  close={() => setOpen(false)}
+                  isActive={isActive(item.href)}
+                />
+              ))}
+            </>
+          )}
         </div>
 
         {/* Logout */}

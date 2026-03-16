@@ -94,12 +94,11 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, ...props }) =>
     vacant: 'default',
     occupied: 'success',
     maintenance: 'warning',
-    inactive: 'ghost',
+    inactive: 'default',
     
     // Tenant statuses
     active: 'success',
     pending: 'warning',
-    inactive: 'default',
     evicted: 'danger',
     
     // Payment statuses

@@ -107,7 +107,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
 
                 <div className="relative z-10 bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-2xl p-6 max-w-md">
                     <div className="flex items-center gap-2 mb-4 text-xs font-bold uppercase tracking-widest text-indigo-400">
-                        <Sparkles size={14} /> What's New in v{RELEASE_NOTES[0].version}
+                        <Sparkles size={14} /> What&apos;s New in v{RELEASE_NOTES[0].version}
                     </div>
                     <h3 className="text-white font-bold mb-2">{RELEASE_NOTES[0].title}</h3>
                     <ul className="space-y-2 mb-4">

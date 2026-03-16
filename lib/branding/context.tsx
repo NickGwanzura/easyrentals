@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { BrandingSettings, DEFAULT_BRANDING, BrandColors } from '@/types/branding';
+import type { Company } from '@/lib/whitelabel/server';
 
 interface BrandingContextType {
   branding: BrandingSettings;
@@ -10,36 +11,52 @@ interface BrandingContextType {
   updateLogo: (file: File) => Promise<string>;
   applyColors: (colors: Partial<BrandColors>) => void;
   resetToDefaults: () => void;
+  company: Company | null;
 }
 
 const BrandingContext = createContext<BrandingContextType | undefined>(undefined);
 
 const STORAGE_KEY = 'agency_branding_settings';
 
-export function BrandingProvider({ children }: { children: ReactNode }) {
-  const [branding, setBranding] = useState<BrandingSettings>(DEFAULT_BRANDING);
-  const [isLoading, setIsLoading] = useState(true);
+// Convert Company to BrandingSettings
+function companyToBranding(company: Company | null): BrandingSettings {
+  if (!company) return DEFAULT_BRANDING;
+  
+  return {
+    agencyName: company.name,
+    logoUrl: company.logo_url,
+    logoDarkUrl: company.logo_dark_url,
+    faviconUrl: company.favicon_url,
+    colors: {
+      primary: company.primary_color,
+      primaryLight: adjustBrightness(company.primary_color, 20),
+      primaryDark: adjustBrightness(company.primary_color, -15),
+      secondary: company.secondary_color,
+      accent: company.accent_color,
+      background: company.background_color,
+      surface: company.surface_color,
+      text: company.text_color,
+      textMuted: adjustBrightness(company.text_color, 40),
+    },
+    showLogoOnPDFs: true,
+    emailSenderName: company.email_sender_name,
+    emailSenderEmail: company.email_sender_email,
+    lastUpdated: new Date().toISOString(),
+    updatedBy: 'system',
+  };
+}
 
-  // Load branding settings from localStorage on mount
-  useEffect(() => {
-    const loadBranding = () => {
-      try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          setBranding({ ...DEFAULT_BRANDING, ...parsed });
-        }
-      } catch (error) {
-        console.error('Failed to load branding settings:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+interface BrandingProviderProps {
+  children: ReactNode;
+  initialCompany?: Company | null;
+}
 
-    loadBranding();
-  }, []);
+export function BrandingProvider({ children, initialCompany }: BrandingProviderProps) {
+  const [company, setCompany] = useState<Company | null>(initialCompany || null);
+  const [branding, setBranding] = useState<BrandingSettings>(companyToBranding(initialCompany || null));
+  const [isLoading, setIsLoading] = useState(!initialCompany);
 
-  // Helper to generate color scale
+  // Generate color scale
   const generateColorScale = (baseColor: string) => {
     const hex = baseColor.replace('#', '');
     const r = parseInt(hex.substring(0, 2), 16);
@@ -74,12 +91,12 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
 
   // Apply CSS variables when branding changes
   useEffect(() => {
-    if (isLoading) return;
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
     
     const root = document.documentElement;
     const { colors } = branding;
     
-    // Set CSS custom properties for theming
+    // Set CSS custom properties
     root.style.setProperty('--brand-primary', colors.primary);
     root.style.setProperty('--brand-primary-light', colors.primaryLight);
     root.style.setProperty('--brand-primary-dark', colors.primaryDark);
@@ -108,7 +125,7 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
       }
     }
     
-    // Apply custom CSS if provided
+    // Apply custom CSS
     if (branding.customCss) {
       let styleEl = document.getElementById('custom-branding-css') as HTMLStyleElement;
       if (!styleEl) {
@@ -118,7 +135,7 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
       }
       styleEl.textContent = branding.customCss;
     }
-  }, [branding, isLoading]);
+  }, [branding]);
 
   const updateBranding = async (updates: Partial<BrandingSettings>): Promise<void> => {
     const updated = {
@@ -129,11 +146,11 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
     
     setBranding(updated);
     
+    // Also save to localStorage as fallback
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
     } catch (error) {
       console.error('Failed to save branding settings:', error);
-      throw error;
     }
   };
 
@@ -174,6 +191,7 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
         updateLogo,
         applyColors,
         resetToDefaults,
+        company,
       }}
     >
       {children}
@@ -200,4 +218,18 @@ export function useBrandingForPDF() {
     headerText: branding.pdfHeaderText,
     footerText: branding.pdfFooterText,
   };
+}
+
+// Helper to adjust brightness
+function adjustBrightness(hex: string, percent: number): string {
+  const num = parseInt(hex.replace('#', ''), 16);
+  const amt = Math.round(2.55 * percent);
+  const R = (num >> 16) + amt;
+  const G = (num >> 8 & 0x00FF) + amt;
+  const B = (num & 0x0000FF) + amt;
+  return '#' + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+    (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+    (B < 255 ? B < 1 ? 0 : B : 255))
+    .toString(16)
+    .slice(1);
 }

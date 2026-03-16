@@ -191,7 +191,7 @@ export const Tasks: React.FC = () => {
                     </div>
                     <h3 className="text-xl font-bold text-slate-900 mb-2">Delete Task?</h3>
                     <p className="text-slate-500 mb-6 text-sm">
-                        Are you sure you want to delete <span className="font-bold text-slate-700">"{taskToDelete.title}"</span>? This action cannot be undone.
+                        Are you sure you want to delete <span className="font-bold text-slate-700">&quot;{taskToDelete.title}&quot;</span>? This action cannot be undone.
                     </p>
                     <div className="flex gap-3">
                         <button onClick={() => setTaskToDelete(null)} className="flex-1 py-3 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold uppercase text-xs tracking-wider transition-colors">

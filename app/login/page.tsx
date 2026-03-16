@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useBranding } from '@/lib/branding/context';
-import { Eye, EyeOff, Home, ArrowRight, User, Building2, Users } from 'lucide-react';
+import { Eye, EyeOff, Home, ArrowRight, User, Building2, Users, Landmark } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
@@ -17,9 +17,10 @@ export const dynamic = 'force-dynamic';
 const DEMO_MODE_ENABLED = true;
 
 const demoAccounts = [
-  { role: 'admin', email: 'demo@admin.com', icon: Building2, label: 'Admin' },
-  { role: 'agent', email: 'demo@agent.com', icon: User, label: 'Agent' },
-  { role: 'tenant', email: 'demo@tenant.com', icon: Users, label: 'Tenant' },
+  { role: 'admin',    email: 'demo@admin.com',    icon: Building2, label: 'Admin',    desc: 'Full platform access' },
+  { role: 'landlord', email: 'demo@landlord.com', icon: Landmark,  label: 'Landlord', desc: 'Portfolio & finance view' },
+  { role: 'agent',    email: 'demo@agent.com',    icon: User,      label: 'Agent',    desc: 'Properties & leads' },
+  { role: 'tenant',   email: 'demo@tenant.com',   icon: Users,     label: 'Tenant',   desc: 'Payments & requests' },
 ];
 
 function LoginContent() {
@@ -328,7 +329,7 @@ function LoginContent() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold" style={{ color: colors.text }}>{account.label}</p>
-                        <p className="text-xs truncate font-mono" style={{ color: colors.textMuted }}>{account.email} · demo123</p>
+                        <p className="text-xs" style={{ color: colors.textMuted }}>{account.desc}</p>
                       </div>
                       <ArrowRight className="w-4 h-4 flex-shrink-0" style={{ color: colors.textMuted }} />
                     </button>

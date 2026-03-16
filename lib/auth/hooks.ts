@@ -3,9 +3,33 @@ import { useAuth } from './context';
 import { UserRole, Property, Tenant, Payment, Lead } from '@/types';
 import { demoData } from '@/lib/mockData';
 
+export interface AdminDashboardData {
+  stats: {
+    totalProperties: number;
+    occupiedUnits: number;
+    vacantUnits: number;
+    maintenanceUnits: number;
+    monthlyIncome: number;
+    outstandingRent: number;
+    totalTenants: number;
+    activeLeases: number;
+    expiringLeasesCount: number;
+  };
+  recentPayments: Payment[];
+  recentLeads: Lead[];
+  expiringLeases: typeof demoData.leases;
+  occupancyRate: number;
+}
+
+export type DashboardData =
+  | AdminDashboardData
+  | ReturnType<typeof getAgentDashboardData>
+  | ReturnType<typeof getTenantDashboardData>
+  | ReturnType<typeof getLandlordDashboardData>;
+
 // Hook to get role-specific dashboard data
-export function useDashboardData() {
-  const { user, isDemoMode } = useAuth();
+export function useDashboardData(): DashboardData | null {
+  const { user } = useAuth();
   
   return useMemo(() => {
     if (!user) return null;
@@ -25,7 +49,7 @@ export function useDashboardData() {
   }, [user]);
 }
 
-function getAdminDashboardData() {
+function getAdminDashboardData(): AdminDashboardData {
   const properties = demoData.properties;
   const tenants = demoData.tenants;
   const payments = demoData.payments;
@@ -170,6 +194,10 @@ function getLandlordDashboardData(userId: string) {
       totalTenants: tenants.length,
     },
   };
+}
+
+export function isAdminDashboardData(data: DashboardData | null): data is AdminDashboardData {
+  return !!data && 'recentPayments' in data && 'recentLeads' in data && 'occupancyRate' in data;
 }
 
 // Hook to get properties with role-based filtering

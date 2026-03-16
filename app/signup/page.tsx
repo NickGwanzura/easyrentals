@@ -95,7 +95,7 @@ export default function SignupPage() {
       {/* Left Side - Form */}
       <div className="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
-          <Link href="/landing" className="flex items-center justify-center gap-2 mb-8">
+          <Link href="/" className="flex items-center justify-center gap-2 mb-8">
             <div className="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center">
               <Home className="w-6 h-6 text-white" />
             </div>
@@ -198,6 +198,7 @@ export default function SignupPage() {
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="text-slate-400 hover:text-slate-600"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>

@@ -46,12 +46,12 @@ function EstateMovesContent() {
 
   const moveIns = demoEstateMoveIns.filter(m => 
     m.residentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    m.unitNumber.toLowerCase().includes(searchQuery.toLowerCase())
+    (m.unitNumber || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const moveOuts = demoEstateMoveOuts.filter(m => 
     m.residentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    m.unitNumber.toLowerCase().includes(searchQuery.toLowerCase())
+    (m.unitNumber || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const stats = {

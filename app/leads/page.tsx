@@ -133,7 +133,7 @@ export default function LeadsPage() {
         {/* Leads List */}
         <div className="space-y-4">
           {filteredLeads.map((lead) => (
-            <LeadCard key={lead.id} lead={lead} getPropertyName={getPropertyName} />
+            <LeadCard key={lead.id} lead={lead} />
           ))}
           
           {filteredLeads.length === 0 && (

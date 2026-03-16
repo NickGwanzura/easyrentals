@@ -15,6 +15,10 @@ export const DEMO_CREDENTIALS = {
     email: 'demo@admin.com',
     password: 'demo123',
   },
+  landlord: {
+    email: 'demo@landlord.com',
+    password: 'demo123',
+  },
   agent: {
     email: 'demo@agent.com',
     password: 'demo123',
@@ -66,7 +70,7 @@ export const demoUsers: User[] = [
   // Additional users for variety
   {
     id: 'user-landlord-1',
-    email: 'landlord@example.com',
+    email: DEMO_CREDENTIALS.landlord.email,
     firstName: 'Robert',
     lastName: 'Williams',
     role: 'landlord',

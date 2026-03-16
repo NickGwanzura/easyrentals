@@ -285,6 +285,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       case 'admin':
         email = 'demo@admin.com';
         break;
+      case 'landlord':
+        email = 'demo@landlord.com';
+        break;
       case 'agent':
         email = 'demo@agent.com';
         break;

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import Image from 'next/image';
 import { 
   Camera, 
   Upload, 
@@ -187,11 +188,14 @@ export default function PhotoUpload({
                 className="relative group rounded-lg overflow-hidden border border-slate-200"
               >
                 {/* Image Preview */}
-                <div className="aspect-square bg-slate-100">
-                  <img
+                <div className="relative aspect-square bg-slate-100">
+                  <Image
                     src={photo.fileUrl}
                     alt={photo.fileName}
-                    className="w-full h-full object-cover"
+                    fill
+                    unoptimized
+                    className="object-cover"
+                    sizes="(max-width: 768px) 50vw, 33vw"
                   />
                 </div>
                 
@@ -282,10 +286,13 @@ export function PhotoGallery({ photos, onDelete }: PhotoGalleryProps) {
             className="relative group aspect-square rounded-lg overflow-hidden cursor-pointer"
             onClick={() => setSelectedPhoto(photo)}
           >
-            <img
+            <Image
               src={photo.fileUrl}
               alt={photo.fileName}
-              className="w-full h-full object-cover"
+              fill
+              unoptimized
+              className="object-cover"
+              sizes="25vw"
             />
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors">
               <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/60 to-transparent">
@@ -319,9 +326,12 @@ export function PhotoGallery({ photos, onDelete }: PhotoGalleryProps) {
           </button>
           
           <div className="max-w-4xl w-full" onClick={(e) => e.stopPropagation()}>
-            <img
+            <Image
               src={selectedPhoto.fileUrl}
               alt={selectedPhoto.fileName}
+              width={1600}
+              height={1000}
+              unoptimized
               className="w-full h-auto max-h-[70vh] object-contain"
             />
             <div className="mt-4 flex items-center justify-between text-white">

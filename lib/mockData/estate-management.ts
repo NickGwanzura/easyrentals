@@ -7,6 +7,7 @@ import {
   Estate, EstateBlock, EstateUnit, EstateLevy, 
   EstateMoveIn, EstateMoveOut, EstateAmenity, EstateDashboardSummary 
 } from '@/types/estate-management';
+import { demoUsers } from './index';
 
 // ============================================================================
 // Zimbabwean Names
@@ -151,6 +152,11 @@ export const demoEstateUnits: EstateUnit[] = [];
 
 const unitTypes: EstateUnit['unitType'][] = ['apartment', 'house', 'townhouse', 'duplex', 'penthouse'];
 const unitStatuses: EstateUnit['status'][] = ['occupied', 'vacant', 'owner_occupied'];
+const delegatedOwners = demoUsers.filter((user) => user.role === 'admin' || user.role === 'landlord');
+
+function getDelegatedOwner(index: number) {
+  return delegatedOwners[index % delegatedOwners.length];
+}
 
 let unitIdCounter = 1;
 
@@ -165,6 +171,10 @@ bbBlocks.forEach((blockId, blockIndex) => {
     const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
     const status = unitStatuses[Math.floor(Math.random() * unitStatuses.length)];
     const mobileNetwork = ['71', '73', '77', '78'][Math.floor(Math.random() * 4)];
+    const delegatedOwner = getDelegatedOwner(unitIdCounter - 1);
+    const rentalTenantFirstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+    const rentalTenantLastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+    const monthlyRent = 850 + Math.floor(Math.random() * 650);
     
     demoEstateUnits.push({
       id: `unit-${unitIdCounter}`,
@@ -178,12 +188,18 @@ bbBlocks.forEach((blockId, blockIndex) => {
       squareMeters: 120 + Math.floor(Math.random() * 200),
       parkingSpaces: Math.floor(Math.random() * 3) + 1,
       ownerId: `owner-${unitIdCounter}`,
+      ownerUserId: delegatedOwner.id,
       ownerName: `${firstName} ${lastName}`,
       ownerPhone: `+263 ${mobileNetwork}${Math.floor(Math.random() * 10)} ${String(Math.floor(Math.random() * 900) + 100)} ${String(Math.floor(Math.random() * 900) + 100)}`,
       ownerEmail: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@gmail.com`,
       ownerAddress: `${Math.floor(Math.random() * 100) + 1} Borrowdale Road, Harare`,
-      tenantName: status === 'occupied' ? 'Tenant Name' : undefined,
+      tenantName: status === 'occupied' ? `${rentalTenantFirstName} ${rentalTenantLastName}` : undefined,
       tenantPhone: status === 'occupied' ? `+263 77 ${String(Math.floor(Math.random() * 900) + 100)} ${String(Math.floor(Math.random() * 900) + 100)}` : undefined,
+      tenantEmail: status === 'occupied' ? `${rentalTenantFirstName.toLowerCase()}.${rentalTenantLastName.toLowerCase()}@gmail.com` : undefined,
+      monthlyRent: status === 'occupied' ? monthlyRent : undefined,
+      securityDeposit: status === 'occupied' ? monthlyRent : undefined,
+      leaseStartDate: status === 'occupied' ? '2024-01-01' : undefined,
+      leaseEndDate: status === 'occupied' ? '2024-12-31' : undefined,
       levyAmount: 200 + Math.floor(Math.random() * 100),
       outstandingLevy: status === 'occupied' ? Math.floor(Math.random() * 400) : 0,
       status: status,
@@ -203,6 +219,10 @@ for (let i = 1; i <= 18; i++) {
   const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
   const status = unitStatuses[Math.floor(Math.random() * unitStatuses.length)];
   const mobileNetwork = ['71', '73', '77', '78'][Math.floor(Math.random() * 4)];
+  const delegatedOwner = getDelegatedOwner(unitIdCounter - 1);
+  const rentalTenantFirstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+  const rentalTenantLastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+  const monthlyRent = 700 + Math.floor(Math.random() * 500);
   
   demoEstateUnits.push({
     id: `unit-${unitIdCounter}`,
@@ -214,11 +234,18 @@ for (let i = 1; i <= 18; i++) {
     squareMeters: 100 + Math.floor(Math.random() * 150),
     parkingSpaces: Math.floor(Math.random() * 2) + 1,
     ownerId: `owner-${unitIdCounter}`,
+    ownerUserId: delegatedOwner.id,
     ownerName: `${firstName} ${lastName}`,
     ownerPhone: `+263 ${mobileNetwork}${Math.floor(Math.random() * 10)} ${String(Math.floor(Math.random() * 900) + 100)} ${String(Math.floor(Math.random() * 900) + 100)}`,
     ownerEmail: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@gmail.com`,
     ownerAddress: `${Math.floor(Math.random() * 100) + 1} Enterprise Road, Highlands, Harare`,
-    tenantName: status === 'occupied' ? 'Tenant Name' : undefined,
+    tenantName: status === 'occupied' ? `${rentalTenantFirstName} ${rentalTenantLastName}` : undefined,
+    tenantPhone: status === 'occupied' ? `+263 77 ${String(Math.floor(Math.random() * 900) + 100)} ${String(Math.floor(Math.random() * 900) + 100)}` : undefined,
+    tenantEmail: status === 'occupied' ? `${rentalTenantFirstName.toLowerCase()}.${rentalTenantLastName.toLowerCase()}@gmail.com` : undefined,
+    monthlyRent: status === 'occupied' ? monthlyRent : undefined,
+    securityDeposit: status === 'occupied' ? monthlyRent : undefined,
+    leaseStartDate: status === 'occupied' ? '2024-02-01' : undefined,
+    leaseEndDate: status === 'occupied' ? '2025-01-31' : undefined,
     levyAmount: 150 + Math.floor(Math.random() * 50),
     outstandingLevy: status === 'occupied' ? Math.floor(Math.random() * 300) : 0,
     status: status,
@@ -242,6 +269,10 @@ bhBlocks.forEach((blockId, blockIndex) => {
     const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
     const status = unitStatuses[Math.floor(Math.random() * unitStatuses.length)];
     const mobileNetwork = ['71', '73', '77', '78'][Math.floor(Math.random() * 4)];
+    const delegatedOwner = getDelegatedOwner(unitIdCounter - 1);
+    const rentalTenantFirstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+    const rentalTenantLastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+    const monthlyRent = 600 + Math.floor(Math.random() * 300);
     
     demoEstateUnits.push({
       id: `unit-${unitIdCounter}`,
@@ -255,11 +286,18 @@ bhBlocks.forEach((blockId, blockIndex) => {
       squareMeters: 80 + Math.floor(Math.random() * 60),
       parkingSpaces: 1,
       ownerId: `owner-${unitIdCounter}`,
+      ownerUserId: delegatedOwner.id,
       ownerName: `${firstName} ${lastName}`,
       ownerPhone: `+263 ${mobileNetwork}${Math.floor(Math.random() * 10)} ${String(Math.floor(Math.random() * 900) + 100)} ${String(Math.floor(Math.random() * 900) + 100)}`,
       ownerEmail: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@gmail.com`,
       ownerAddress: `${Math.floor(Math.random() * 100) + 1} Hillside Road, Bulawayo`,
-      tenantName: status === 'occupied' ? 'Tenant Name' : undefined,
+      tenantName: status === 'occupied' ? `${rentalTenantFirstName} ${rentalTenantLastName}` : undefined,
+      tenantPhone: status === 'occupied' ? `+263 77 ${String(Math.floor(Math.random() * 900) + 100)} ${String(Math.floor(Math.random() * 900) + 100)}` : undefined,
+      tenantEmail: status === 'occupied' ? `${rentalTenantFirstName.toLowerCase()}.${rentalTenantLastName.toLowerCase()}@gmail.com` : undefined,
+      monthlyRent: status === 'occupied' ? monthlyRent : undefined,
+      securityDeposit: status === 'occupied' ? monthlyRent : undefined,
+      leaseStartDate: status === 'occupied' ? '2024-03-01' : undefined,
+      leaseEndDate: status === 'occupied' ? '2025-02-28' : undefined,
       levyAmount: 120 + Math.floor(Math.random() * 30),
       outstandingLevy: status === 'occupied' ? Math.floor(Math.random() * 240) : 0,
       status: status,

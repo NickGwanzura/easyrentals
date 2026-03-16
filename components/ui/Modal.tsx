@@ -24,6 +24,8 @@ export default function Modal({
 }: ModalProps) {
   // Close on escape key
   useEffect(() => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+    
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
@@ -40,6 +42,9 @@ export default function Modal({
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
+  
+  // Skip portal creation during SSR
+  if (typeof document === 'undefined') return null;
 
   const sizes = {
     sm: 'max-w-md',

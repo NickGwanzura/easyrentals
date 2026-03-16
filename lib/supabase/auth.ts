@@ -1,5 +1,10 @@
 import { supabase } from './client';
 import { UserRole } from '@/types';
+import {
+  getAccountRecord,
+  mapAccountToUser,
+  syncAccountIdentity,
+} from '@/lib/auth/account-records';
 
 export interface SignUpCredentials {
   email: string;
@@ -33,22 +38,20 @@ export async function signUp({ email, password, firstName, lastName, role, phone
     throw authError;
   }
 
-  // Create profile in profiles table
+  // Sync the user record used by the app runtime.
   if (authData.user) {
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .insert({
+    try {
+      await syncAccountIdentity({
         id: authData.user.id,
         email,
-        first_name: firstName,
-        last_name: lastName,
+        firstName,
+        lastName,
         role,
         phone: phone || null,
       });
-
-    if (profileError) {
-      console.error('Profile creation error:', profileError);
-      // Don't throw - user is created, profile can be updated later
+    } catch (profileError) {
+      console.error('Profile sync error:', profileError);
+      // Don't throw - auth user is created, and the profile can be repaired later.
     }
   }
 
@@ -82,23 +85,8 @@ export async function getCurrentUser() {
     return null;
   }
 
-  // Get full profile from profiles table
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single();
-
-  return {
-    id: user.id,
-    email: user.email!,
-    firstName: profile?.first_name || user.user_metadata.first_name || '',
-    lastName: profile?.last_name || user.user_metadata.last_name || '',
-    role: (profile?.role || user.user_metadata.role || 'tenant') as UserRole,
-    avatar: profile?.avatar_url || user.user_metadata.avatar_url || null,
-    phone: profile?.phone || user.user_metadata.phone || null,
-    createdAt: profile?.created_at || user.created_at,
-  };
+  const account = await getAccountRecord(user.id);
+  return mapAccountToUser(user, account);
 }
 
 export async function resetPassword(email: string) {

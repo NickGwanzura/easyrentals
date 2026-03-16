@@ -264,12 +264,12 @@ export default function LeaseReviewsPage() {
                       )}
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${ratingColors[review.complianceRating]}`}>
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${ratingColors[review.complianceRating as LeaseComplianceRating]}`}>
                         {review.complianceRating.charAt(0).toUpperCase() + review.complianceRating.slice(1)}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${statusColors[review.status]}`}>
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${statusColors[review.status as LeaseReviewStatus]}`}>
                         {review.status.charAt(0).toUpperCase() + review.status.slice(1)}
                       </span>
                     </td>

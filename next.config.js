@@ -2,12 +2,12 @@
 const nextConfig = {
   // Disable TypeScript errors during build (for demo deployment)
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   
-  // Disable ESLint errors during build
+  // Enforce ESLint during build
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
   
   // Build optimization
@@ -27,11 +27,6 @@ const nextConfig = {
   // Redirects
   async redirects() {
     return [
-      {
-        source: '/',
-        destination: '/login',
-        permanent: true,
-      },
       {
         source: '/landing',
         destination: '/login',
@@ -76,9 +71,6 @@ const nextConfig = {
       },
     ];
   },
-  
-  // Output configuration
-  output: 'standalone', // Optimized for Vercel deployment
   
   // Trailing slashes
   trailingSlash: false,

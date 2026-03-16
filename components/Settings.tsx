@@ -496,7 +496,7 @@ export const Settings: React.FC = () => {
                                     </p>
                                 </div>
                             ) : (
-                                <p className="text-xs text-slate-400 italic text-center py-4">Click "Run Test" to compare local and remote record counts.</p>
+                                <p className="text-xs text-slate-400 italic text-center py-4">Click &quot;Run Test&quot; to compare local and remote record counts.</p>
                             )}
                         </div>
                     )}

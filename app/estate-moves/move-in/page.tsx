@@ -6,11 +6,9 @@ import { useSearchParams } from 'next/navigation';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import Card, { CardHeader } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
-import { 
-  demoEstates, 
-  demoEstateUnits 
-} from '@/lib/mockData/estate-management';
+import { demoEstates, demoEstateUnits } from '@/lib/mockData/estate-management';
 import { formatCurrency } from '@/lib/utils';
+import type { EstateUnit } from '@/types';
 import { 
   ArrowUpRight,
   Building2,
@@ -117,7 +115,7 @@ function MoveInContent() {
                       <option value="">Choose a vacant unit</option>
                       {units.map(u => (
                         <option key={u.id} value={u.id}>
-                          Unit {u.unitNumber} {u.blockName ? `(${u.blockName})` : ''} - Levy: {formatCurrency(u.monthlyLevy)}/mo
+                          Unit {u.unitNumber} {u.blockName ? `(${u.blockName})` : ''} - Levy: {formatCurrency(u.monthlyLevy || 0)}/mo
                         </option>
                       ))}
                     </select>
@@ -309,7 +307,7 @@ function MoveInContent() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-slate-600">Monthly Levy</span>
-                    <span className="text-sm font-medium text-slate-900">{formatCurrency(selectedUnitData.monthlyLevy)}</span>
+                    <span className="text-sm font-medium text-slate-900">{formatCurrency(selectedUnitData.monthlyLevy || 0)}</span>
                   </div>
                 </div>
               </Card>
