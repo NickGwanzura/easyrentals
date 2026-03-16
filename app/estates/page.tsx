@@ -8,7 +8,7 @@ import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
 import StatusBadge from '@/components/ui/StatusBadge';
-import { demoEstates } from '@/lib/mockData/estate-management';
+import { demoEstates, demoEstateUnits } from '@/lib/mockData/estate-management';
 import type { Estate } from '@/types';
 import { formatCurrency } from '@/lib/utils';
 import { 
@@ -54,11 +54,26 @@ function EstatesContent() {
     estate.address.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const occupiedUnits = demoEstateUnits.filter(u => u.status === 'occupied');
+  const totalRentalIncome = occupiedUnits.reduce((sum, u) => sum + (u.monthlyRent || 0), 0);
+
   const stats = {
     totalEstates: demoEstates.length,
     totalUnits: demoEstates.reduce((sum, e) => sum + e.totalUnits, 0),
-    occupiedUnits: Math.floor(demoEstates.reduce((sum, e) => sum + e.totalUnits, 0) * 0.75),
-    vacantUnits: Math.floor(demoEstates.reduce((sum, e) => sum + e.totalUnits, 0) * 0.25),
+    occupiedUnits: occupiedUnits.length,
+    vacantUnits: demoEstateUnits.filter(u => u.status === 'vacant').length,
+    totalRentalIncome,
+  };
+
+  // Per-estate rental summary
+  const estateRentals = (estateId: string) => {
+    const units = demoEstateUnits.filter(u => u.estateId === estateId);
+    const occupied = units.filter(u => u.status === 'occupied');
+    return {
+      monthlyIncome: occupied.reduce((sum, u) => sum + (u.monthlyRent || 0), 0),
+      occupied: occupied.length,
+      total: units.length,
+    };
   };
 
   const handleAddEstate = (e: React.FormEvent) => {
@@ -68,8 +83,14 @@ function EstatesContent() {
     const newEstate: Estate = {
       id: `est-${Date.now()}`,
       ...formData,
+      country: 'Zimbabwe',
+      hasBlocks: false,
+      defaultLevyAmount: 0,
+      levyDueDay: 1,
       status: 'active',
       createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      createdBy: 'current-user',
     };
     
     // Add to demo data
@@ -114,7 +135,7 @@ function EstatesContent() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           <Card className="p-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-primary-50 rounded-lg flex items-center justify-center">
@@ -151,11 +172,22 @@ function EstatesContent() {
           <Card className="p-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-danger-50 rounded-lg flex items-center justify-center">
-                <DollarSign className="w-5 h-5 text-danger-600" />
+                <Home className="w-5 h-5 text-danger-600" />
               </div>
               <div>
                 <p className="text-sm text-slate-500">Vacant</p>
                 <p className="text-lg font-bold text-slate-900">{stats.vacantUnits}</p>
+              </div>
+            </div>
+          </Card>
+          <Card className="p-4 col-span-2 lg:col-span-1">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-success-50 rounded-lg flex items-center justify-center">
+                <DollarSign className="w-5 h-5 text-success-600" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-500">Monthly Rental</p>
+                <p className="text-lg font-bold text-slate-900">{formatCurrency(stats.totalRentalIncome)}</p>
               </div>
             </div>
           </Card>
@@ -186,6 +218,7 @@ function EstatesContent() {
                   <th className="text-left py-3 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider">Estate</th>
                   <th className="text-left py-3 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider">City</th>
                   <th className="text-left py-3 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider">Units</th>
+                  <th className="text-left py-3 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider">Rentals</th>
                   <th className="text-left py-3 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider">Manager</th>
                   <th className="text-left py-3 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
                   <th className="text-left py-3 px-4 text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
@@ -213,6 +246,17 @@ function EstatesContent() {
                     </td>
                     <td className="py-4 px-4">
                       <span className="text-sm font-medium text-slate-900">{estate.totalUnits}</span>
+                    </td>
+                    <td className="py-4 px-4">
+                      {(() => {
+                        const r = estateRentals(estate.id);
+                        return (
+                          <div>
+                            <p className="text-sm font-semibold text-slate-900">{formatCurrency(r.monthlyIncome)}<span className="text-xs font-normal text-slate-400">/mo</span></p>
+                            <p className="text-xs text-slate-500">{r.occupied}/{r.total} units rented</p>
+                          </div>
+                        );
+                      })()}
                     </td>
                     <td className="py-4 px-4">
                       <p className="text-sm text-slate-900">{estate.estateManagerName}</p>
