@@ -10,7 +10,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
 import { useAuth } from '@/lib/auth/context';
-import { resetPassword } from '@/lib/supabase/auth';
+const resetPassword = async (_email: string) => { throw new Error('Password reset is not available in demo mode.'); };
 import { UserRole } from '@/types';
 
 export const dynamic = 'force-dynamic';

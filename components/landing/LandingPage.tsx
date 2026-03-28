@@ -292,7 +292,7 @@ export default function LandingPage() {
 
               {/* Subheadline */}
               <p className="mx-auto mb-10 max-w-2xl text-lg leading-relaxed text-gray-600 sm:text-xl">
-                Collect rent, manage tenants, and grow your portfolio — all from one powerful dashboard built for property managers and landlords.
+                Collect rent, manage tenants, and grow your portfolio. One powerful dashboard built for property managers and landlords.
               </p>
 
               {/* CTAs */}
@@ -397,9 +397,9 @@ export default function LandingPage() {
                       <div className="text-xs font-semibold text-gray-400 mb-3">Recent Activity</div>
                       <div className="space-y-3">
                         {[
-                          { text: 'Rent received — Unit 4B', time: '2m ago', dot: 'bg-green-400' },
-                          { text: 'Lease renewed — Johnson', time: '1h ago', dot: 'bg-primary-400' },
-                          { text: 'Inspection due — Block C', time: '3h ago', dot: 'bg-amber-400' },
+                          { text: 'Rent received · Unit 4B', time: '2m ago', dot: 'bg-green-400' },
+                          { text: 'Lease renewed · Johnson', time: '1h ago', dot: 'bg-primary-400' },
+                          { text: 'Inspection due · Block C', time: '3h ago', dot: 'bg-amber-400' },
                           { text: 'New tenant onboarded', time: 'Today', dot: 'bg-green-400' },
                         ].map((item, i) => (
                           <div key={i} className="flex items-start gap-2.5">

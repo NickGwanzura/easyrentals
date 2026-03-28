@@ -377,7 +377,7 @@ export const Rentals: React.FC = () => {
                         </span>
                     </div>
                     <div className="flex items-center gap-3 mt-2 sm:mt-3 text-[10px] sm:text-xs text-slate-400 uppercase tracking-wide font-medium flex-wrap">
-                        <span className="flex items-center gap-1"><Calendar size={12} /> {contract.startDate} — {contract.endDate}</span>
+                        <span className="flex items-center gap-1"><Calendar size={12} /> {contract.startDate} to {contract.endDate}</span>
                         <span>ID: {contract.id}</span>
                     </div>
                     </div>

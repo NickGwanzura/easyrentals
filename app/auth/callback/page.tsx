@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Home, Lock } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import { updatePassword } from '@/lib/supabase/auth';
+const updatePassword = async (_pw: string) => { throw new Error('Not available in demo mode.'); };
 
 function AuthCallbackContent() {
   const [password, setPassword] = useState('');

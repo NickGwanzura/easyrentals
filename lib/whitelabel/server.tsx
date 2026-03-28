@@ -2,10 +2,7 @@
  * Server-Side White-Label Utilities
  */
 
-import { headers } from 'next/headers';
 import { cache } from 'react';
-import { createClient } from '@/lib/supabase/server';
-import { resolveCompanyForHostname, type ResolvedCompany } from './tenant-resolver';
 
 export interface Company {
   id: string;
@@ -64,94 +61,23 @@ export const DEFAULT_COMPANY: Company = {
   features: [],
 };
 
-function normalizeCompany(company: ResolvedCompany | null): Company | null {
-  if (!company) {
-    return null;
-  }
-
-  return {
-    ...DEFAULT_COMPANY,
-    ...company,
-    custom_domain: company.custom_domain || undefined,
-    logo_url: company.logo_url || undefined,
-    logo_dark_url: company.logo_dark_url || undefined,
-    favicon_url: company.favicon_url || undefined,
-    primary_color: company.primary_color || DEFAULT_COMPANY.primary_color,
-    secondary_color: company.secondary_color || DEFAULT_COMPANY.secondary_color,
-    accent_color: company.accent_color || DEFAULT_COMPANY.accent_color,
-    background_color: company.background_color || DEFAULT_COMPANY.background_color,
-    surface_color: company.surface_color || DEFAULT_COMPANY.surface_color,
-    text_color: company.text_color || DEFAULT_COMPANY.text_color,
-    custom_css: company.custom_css || undefined,
-    email_sender_name: company.email_sender_name || DEFAULT_COMPANY.email_sender_name,
-    email_sender_email: company.email_sender_email || DEFAULT_COMPANY.email_sender_email,
-    subscription_status: company.subscription_status || DEFAULT_COMPANY.subscription_status,
-    subscription_tier: company.subscription_tier || DEFAULT_COMPANY.subscription_tier,
-    max_users: company.max_users ?? DEFAULT_COMPANY.max_users,
-    max_properties: company.max_properties ?? DEFAULT_COMPANY.max_properties,
-    features: company.features || DEFAULT_COMPANY.features,
-    owner_id: company.owner_id || undefined,
-    status: company.status || DEFAULT_COMPANY.status,
-    created_at: company.created_at || undefined,
-    updated_at: company.updated_at || undefined,
-  };
-}
 
 /**
  * Get current company from request headers (server-side only)
  */
 export const getCurrentCompany = cache(async (): Promise<Company | null> => {
-  const headersList = await headers();
-  const companyId = headersList.get('x-company-id');
-  const supabase = createClient();
-
-  if (companyId) {
-    const { data } = await supabase
-      .from('companies')
-      .select('*')
-      .eq('id', companyId)
-      .eq('status', 'active')
-      .maybeSingle();
-
-    if (data) {
-      return normalizeCompany(data);
-    }
-  }
-
-  const hostname = headersList.get('x-forwarded-host') || headersList.get('host');
-  const resolvedCompany = await resolveCompanyForHostname(hostname, supabase);
-
-  return normalizeCompany(resolvedCompany) || DEFAULT_COMPANY;
+  return DEFAULT_COMPANY;
 });
 
 /**
  * Get company by slug (for public pages like login)
  */
-export async function getCompanyBySlug(slug: string): Promise<Company | null> {
-  const supabase = createClient();
-  const { data } = await supabase
-    .from('companies')
-    .select('*')
-    .eq('slug', slug)
-    .eq('status', 'active')
-    .single();
-  
-  return data;
+export async function getCompanyBySlug(_slug: string): Promise<Company | null> {
+  return DEFAULT_COMPANY;
 }
 
-/**
- * Get company by custom domain
- */
-export async function getCompanyByDomain(domain: string): Promise<Company | null> {
-  const supabase = createClient();
-  const { data } = await supabase
-    .from('companies')
-    .select('*')
-    .eq('custom_domain', domain)
-    .eq('status', 'active')
-    .single();
-  
-  return data;
+export async function getCompanyByDomain(_domain: string): Promise<Company | null> {
+  return DEFAULT_COMPANY;
 }
 
 /**

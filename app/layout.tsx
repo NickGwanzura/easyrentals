@@ -1,15 +1,29 @@
 import type { Metadata, Viewport } from 'next';
-import { Ubuntu } from 'next/font/google';
+import { IBM_Plex_Sans, IBM_Plex_Mono } from 'next/font/google';
 import { AuthProvider } from '@/lib/auth/context';
 import { ToastProvider } from '@/components/ui/Toast';
 import { BrandingProvider } from '@/lib/branding/context';
 import { WorkflowProvider } from '@/lib/workflow/context';
 import { getCurrentCompany, generateBrandingCSS } from '@/lib/whitelabel/server';
+import SiteLock from '@/components/SiteLock';
+
+// IBM Carbon Design System styles
+import '@carbon/styles/css/styles.css';
 import './globals.css';
 
-const ubuntu = Ubuntu({
+// IBM Plex Sans - Carbon's primary font
+const ibmPlexSans = IBM_Plex_Sans({
   subsets: ['latin'],
-  weight: ['300', '400', '500', '700'],
+  weight: ['300', '400', '500', '600', '700'],
+  variable: '--cds-font-family',
+  display: 'swap',
+});
+
+// IBM Plex Mono - Carbon's monospace font
+const ibmPlexMono = IBM_Plex_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  variable: '--cds-font-family-mono',
   display: 'swap',
 });
 
@@ -33,7 +47,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#0f172a' },
+    { media: '(prefers-color-scheme: dark)', color: '#161616' },
   ],
 };
 
@@ -46,8 +60,9 @@ export default async function RootLayout({
   const brandingCSS = generateBrandingCSS(company);
   
   return (
-    <html lang="en">
+    <html lang="en" className={`${ibmPlexSans.variable} ${ibmPlexMono.variable}`}>
       <head>
+        {/* Server-side branding styles */}
         <style 
           id="server-branding" 
           dangerouslySetInnerHTML={{ __html: brandingCSS }}
@@ -59,16 +74,18 @@ export default async function RootLayout({
           />
         )}
       </head>
-      <body className={ubuntu.className}>
-        <AuthProvider>
-          <WorkflowProvider>
-            <BrandingProvider initialCompany={company}>
-              <ToastProvider>
-                {children}
-              </ToastProvider>
-            </BrandingProvider>
-          </WorkflowProvider>
-        </AuthProvider>
+      <body className="font-carbon antialiased">
+        <SiteLock>
+          <AuthProvider>
+            <WorkflowProvider>
+              <BrandingProvider initialCompany={company}>
+                <ToastProvider>
+                  {children}
+                </ToastProvider>
+              </BrandingProvider>
+            </WorkflowProvider>
+          </AuthProvider>
+        </SiteLock>
       </body>
     </html>
   );

@@ -1,0 +1,60 @@
+// IBM Carbon Design System - Global Styles
+// Import Carbon core styles
+@use '@carbon/react/scss/themes' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/react/scss/components' as *;
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/type' as *;
+@use '@carbon/react/scss/motion' as *;
+@use '@carbon/react/scss/utilities' as *;
+@use '@carbon/react/scss/colors' as *;
+@use '@carbon/react/scss/grid' as *;
+@use '@carbon/react/scss/layer' as *;
+
+// Apply the white theme by default
+:root {
+  @include theme($white);
+}
+
+// Custom scrollbar (Carbon style)
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: $layer-01;
+}
+
+::-webkit-scrollbar-thumb {
+  background: $border-subtle-01;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: $border-strong-01;
+}
+
+// Focus styles (Carbon compliant)
+*:focus-visible {
+  outline: 2px solid $focus;
+  outline-offset: -2px;
+}
+
+// Selection styles
+::selection {
+  background: $highlight;
+  color: $text-primary;
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

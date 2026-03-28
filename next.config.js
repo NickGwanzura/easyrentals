@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Output standalone for Docker deployment
+  output: 'standalone',
+  
   // Disable TypeScript errors during build (for demo deployment)
   typescript: {
     ignoreBuildErrors: false,
@@ -86,6 +89,12 @@ const nextConfig = {
   
   // Speed up build - skip static generation for problematic pages
   staticPageGenerationTimeout: 60,
+  
+  // Experimental features
+  experimental: {
+    // Optimize package imports for faster builds
+    optimizePackageImports: ['@carbon/react', '@carbon/icons-react'],
+  },
 };
 
 module.exports = nextConfig;

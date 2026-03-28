@@ -1,0 +1,75 @@
+{
+  "name": "eazyrentals",
+  "description": "EazyRentals Property Management Platform with IBM Carbon Design System",
+  "version": "1.0.0",
+  "source": {
+    "type": "git",
+    "repository": "https://github.com/username/eazyrentals",
+    "branch": "main"
+  },
+  "build": {
+    "type": "docker",
+    "dockerfile": "Dockerfile",
+    "context": "."
+  },
+  "deploy": {
+    "replicas": 1,
+    "resources": {
+      "limits": {
+        "cpus": "1",
+        "memory": "2G"
+      },
+      "reservations": {
+        "cpus": "0.5",
+        "memory": "512M"
+      }
+    },
+    "healthCheck": {
+      "path": "/api/health",
+      "port": 3000,
+      "interval": "30s",
+      "timeout": "10s",
+      "retries": 3
+    },
+    "restartPolicy": {
+      "condition": "unless-stopped",
+      "delay": "5s",
+      "maxAttempts": 3
+    }
+  },
+  "env": [
+    {
+      "name": "NODE_ENV",
+      "value": "production"
+    },
+    {
+      "name": "NEXT_TELEMETRY_DISABLED",
+      "value": "1"
+    },
+    {
+      "name": "NEXT_PUBLIC_SUPABASE_URL",
+      "required": true
+    },
+    {
+      "name": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+      "required": true
+    },
+    {
+      "name": "SUPABASE_SERVICE_ROLE_KEY",
+      "required": true
+    },
+    {
+      "name": "NEXT_PUBLIC_ENABLE_ANALYTICS",
+      "value": "false"
+    }
+  ],
+  "ports": [
+    {
+      "containerPort": 3000,
+      "hostPort": 3000,
+      "protocol": "tcp"
+    }
+  ],
+  "volumes": [],
+  "networks": ["eazyrentals-network"]
+}

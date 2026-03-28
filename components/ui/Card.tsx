@@ -5,37 +5,50 @@ import { cn } from '@/lib/utils';
 
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   padding?: 'none' | 'sm' | 'md' | 'lg';
-  shadow?: 'none' | 'sm' | 'md' | 'lg';
+  layer?: '01' | '02' | '03';
+  border?: boolean;
   hover?: boolean;
 }
 
+/**
+ * IBM Carbon Design System Card Component
+ * 
+ * Uses Carbon's layering system for proper hierarchy:
+ * - layer-01: Base layer (white theme: gray-10)
+ * - layer-02: Second layer (white theme: white)
+ * - layer-03: Third layer (white theme: gray-10)
+ * 
+ * Padding follows Carbon spacing scale
+ */
 const Card = forwardRef<HTMLDivElement, CardProps>(
   (
-    { children, className, padding = 'md', shadow = 'md', hover = false, ...props },
+    { children, className, padding = 'md', layer = '01', border = false, hover = false, ...props },
     ref
   ) => {
+    // Carbon spacing scale
     const paddings = {
       none: '',
-      sm: 'p-4',
-      md: 'p-6',
-      lg: 'p-8',
+      sm: 'p-3',   // spacing-05 (16px)
+      md: 'p-4',   // spacing-06 (24px)
+      lg: 'p-5',   // spacing-07 (32px)
     };
 
-    const shadows = {
-      none: '',
-      sm: 'shadow-sm',
-      md: 'shadow-card',
-      lg: 'shadow-elevated',
+    // Carbon layer backgrounds
+    const layers = {
+      '01': 'bg-cds-layer-01',
+      '02': 'bg-cds-layer-02',
+      '03': 'bg-cds-layer-03',
     };
 
     return (
       <div
         ref={ref}
         className={cn(
-          'bg-white rounded-2xl border border-slate-100',
+          // Carbon card styles
+          layers[layer],
           paddings[padding],
-          shadows[shadow],
-          hover && 'card-hover cursor-pointer',
+          border && 'border border-cds-border-subtle',
+          hover && 'transition-all duration-moderate-01 hover:shadow-cds-sm',
           className
         )}
         {...props}
@@ -66,12 +79,12 @@ export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
     >
       <div className="flex-1 min-w-0">
         {title && (
-          <h3 className="text-lg font-semibold text-slate-900 truncate">
+          <h3 className="text-heading-02 text-cds-text-primary">
             {title}
           </h3>
         )}
         {subtitle && (
-          <p className="text-sm text-slate-500 mt-0.5">{subtitle}</p>
+          <p className="text-body-01 text-cds-text-secondary mt-1">{subtitle}</p>
         )}
         {children}
       </div>
@@ -99,7 +112,7 @@ export const CardFooter = forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn('flex items-center justify-between mt-6 pt-4 border-t border-slate-100', className)}
+    className={cn('flex items-center justify-between mt-6 pt-4 border-t border-cds-border-subtle', className)}
     {...props}
   />
 ));

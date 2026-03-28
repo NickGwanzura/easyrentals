@@ -4,14 +4,47 @@ import React, { ButtonHTMLAttributes, forwardRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 
+// Support both old and new variant names for backward compatibility
+type ButtonVariant = 
+  | 'primary' 
+  | 'secondary' 
+  | 'tertiary' 
+  | 'ghost' 
+  | 'danger' 
+  | 'danger-secondary'
+  // Legacy variants mapped to Carbon
+  | 'outline'
+  | 'success';
+
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success';
-  size?: 'sm' | 'md' | 'lg';
+  variant?: ButtonVariant;
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'xs';
   isLoading?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  isIconOnly?: boolean;
 }
 
+/**
+ * IBM Carbon Design System Button Component
+ * 
+ * Variants:
+ * - primary: Blue background, white text (default)
+ * - secondary: Gray background, white text
+ * - tertiary: Transparent with blue border and text
+ * - ghost: Transparent with blue text
+ * - danger: Red background, white text
+ * - danger-secondary: Transparent with red border and text
+ * - outline: (Legacy) Maps to tertiary
+ * - success: (Legacy) Maps to primary with green styling
+ * 
+ * Sizes:
+ * - xs: 24px height (icon only)
+ * - sm: 32px height
+ * - md: 40px height (default)
+ * - lg: 48px height
+ * - xl: 64px height
+ */
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
@@ -21,44 +54,93 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       isLoading = false,
       leftIcon,
       rightIcon,
+      isIconOnly = false,
       className,
       disabled,
       ...props
     },
     ref
   ) => {
-    const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed btn-press';
-    
+    // Map legacy variants to Carbon variants
+    const mappedVariant: Exclude<ButtonVariant, 'outline' | 'success'> = 
+      variant === 'outline' ? 'tertiary' :
+      variant === 'success' ? 'primary' :
+      variant;
+
+    // IBM Carbon button base styles
+    const baseStyles = `
+      inline-flex items-center justify-center
+      font-carbon font-semibold text-sm tracking-wide
+      border-0 transition-all duration-fast-02
+      focus:outline-none focus-visible:ring-2 focus-visible:ring-focus
+      disabled:opacity-100 disabled:cursor-not-allowed disabled:bg-cds-button-disabled disabled:text-cds-text-disabled
+      active:scale-[0.98]
+    `;
+
+    // Carbon button variants (with legacy color support)
     const variants = {
-      primary: 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500 shadow-lg shadow-primary-500/25',
-      secondary: 'bg-slate-800 text-white hover:bg-slate-900 focus:ring-slate-500',
-      outline: 'border-2 border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 focus:ring-slate-500',
-      ghost: 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus:ring-slate-500',
-      danger: 'bg-danger-600 text-white hover:bg-danger-700 focus:ring-danger-500 shadow-lg shadow-danger-500/25',
-      success: 'bg-success-600 text-white hover:bg-success-700 focus:ring-success-500 shadow-lg shadow-success-500/25',
+      primary: `
+        bg-cds-button-primary text-white
+        hover:bg-cds-button-primary-hover
+        active:bg-carbon-blue-80
+      `,
+      secondary: `
+        bg-cds-button-secondary text-white
+        hover:bg-cds-button-secondary-hover
+        active:bg-carbon-gray-60
+      `,
+      tertiary: `
+        bg-transparent text-cds-button-tertiary
+        border border-cds-button-tertiary
+        hover:bg-carbon-blue-10 hover:border-cds-button-primary-hover
+        active:bg-carbon-blue-20
+      `,
+      ghost: `
+        bg-transparent text-cds-link-primary
+        hover:bg-cds-background-hover
+        active:bg-cds-background-active
+      `,
+      danger: `
+        bg-cds-button-danger text-white
+        hover:bg-cds-button-danger-hover
+        active:bg-carbon-red-80
+      `,
+      'danger-secondary': `
+        bg-transparent text-cds-button-danger
+        border border-cds-button-danger
+        hover:bg-carbon-red-10 hover:border-cds-button-danger-hover
+        active:bg-carbon-red-20
+      `,
     };
-    
+
+    // Carbon button sizes (following Carbon's scale)
     const sizes = {
-      sm: 'min-h-9 px-3 py-1.5 text-sm gap-1.5',
-      md: 'min-h-11 px-4 py-2.5 text-sm gap-2',
-      lg: 'min-h-12 px-6 py-3 text-base gap-2',
+      xs: isIconOnly ? 'w-6 h-6' : 'h-6 px-3 text-xs',
+      sm: isIconOnly ? 'w-8 h-8' : 'h-8 px-4',
+      md: isIconOnly ? 'w-10 h-10' : 'h-10 px-4',
+      lg: isIconOnly ? 'w-12 h-12' : 'h-12 px-4',
+      xl: isIconOnly ? 'w-16 h-16' : 'h-16 px-4 text-base',
     };
+
+    // Gap between icon and text
+    const iconGap = isIconOnly ? '' : 'gap-2';
 
     return (
       <button
         ref={ref}
         className={cn(
           baseStyles,
-          variants[variant],
+          variants[mappedVariant],
           sizes[size],
+          iconGap,
           className
         )}
         disabled={disabled || isLoading}
         {...props}
       >
-        {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+        {isLoading && <Loader2 className="w-4 h-4 animate-cds-rotate" />}
         {!isLoading && leftIcon}
-        {children}
+        {!isIconOnly && children}
         {!isLoading && rightIcon}
       </button>
     );

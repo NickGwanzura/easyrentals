@@ -6,8 +6,9 @@ import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { LeaseReviewStatus, LeaseComplianceRating } from '@/types';
-import { Calendar, DollarSign, Star, FileText, Home, User, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Calendar, DollarSign, Star, FileText, Home, User, CheckCircle2, AlertCircle, ClipboardCheck } from 'lucide-react';
 import { demoData } from '@/lib/mockData';
+import { demoInspections } from '@/lib/mockData/inspections';
 
 interface AddLeaseReviewModalProps {
   isOpen: boolean;
@@ -19,6 +20,8 @@ export default function AddLeaseReviewModal({ isOpen, onClose, onSuccess }: AddL
   const { showToast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(1);
+  const [lastInspectionCondition, setLastInspectionCondition] = useState<string | null>(null);
+  const [lastInspectionDate, setLastInspectionDate] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     leaseId: '',
     tenantId: '',
@@ -57,12 +60,22 @@ export default function AddLeaseReviewModal({ isOpen, onClose, onSuccess }: AddL
   const handleTenantChange = (tenantId: string) => {
     const tenant = demoData.tenants.find(t => t.id === tenantId);
     const lease = demoData.leases.find(l => l.tenantId === tenantId && l.status === 'active');
+    const propertyId = tenant?.currentPropertyId || '';
+
+    // Auto-suggest property condition from latest completed inspection
+    const lastInspection = demoInspections
+      .filter(i => i.propertyId === propertyId && i.status === 'completed' && i.overallCondition)
+      .sort((a, b) => (b.completedDate || b.scheduledDate).localeCompare(a.completedDate || a.scheduledDate))[0];
+
     setFormData(prev => ({
       ...prev,
       tenantId,
-      propertyId: tenant?.currentPropertyId || '',
+      propertyId,
       leaseId: lease?.id || '',
+      propertyCondition: (lastInspection?.overallCondition as LeaseComplianceRating) || prev.propertyCondition,
     }));
+    setLastInspectionCondition(lastInspection?.overallCondition || null);
+    setLastInspectionDate(lastInspection?.completedDate || lastInspection?.scheduledDate || null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -261,6 +274,15 @@ export default function AddLeaseReviewModal({ isOpen, onClose, onSuccess }: AddL
 
       <div>
         <label className="block text-sm font-medium text-slate-700 mb-1.5">Property Condition</label>
+        {lastInspectionCondition && (
+          <div className="mb-2 flex items-center gap-2 p-2.5 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-700">
+            <ClipboardCheck className="w-3.5 h-3.5 flex-shrink-0" />
+            <span>
+              Last inspection rated this property as <strong className="capitalize">{lastInspectionCondition}</strong>
+              {lastInspectionDate && ` on ${lastInspectionDate}`}, pre-filled below.
+            </span>
+          </div>
+        )}
         <select
           name="propertyCondition"
           value={formData.propertyCondition}

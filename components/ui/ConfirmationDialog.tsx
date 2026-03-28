@@ -1,54 +1,84 @@
 'use client';
 
 import React from 'react';
-import Modal from '@/components/ui/Modal';
-import Button from '@/components/ui/Button';
+import Modal, { ModalFooter } from './Modal';
 import { AlertTriangle } from 'lucide-react';
 
 interface ConfirmationDialogProps {
   isOpen: boolean;
-  title: string;
-  description: string;
-  confirmLabel?: string;
-  cancelLabel?: string;
-  onConfirm: () => void;
   onClose: () => void;
-  variant?: 'danger' | 'warning';
+  onConfirm: () => void;
+  title: string;
+  message?: string;
+  description?: string; // Legacy prop
+  confirmText?: string;
+  confirmLabel?: string; // Legacy prop
+  cancelText?: string;
+  cancelLabel?: string; // Legacy prop
+  isLoading?: boolean;
+  isDanger?: boolean;
+  danger?: boolean; // Legacy prop
+  variant?: 'default' | 'danger' | 'warning'; // Legacy prop
 }
 
-export default function ConfirmationDialog({
+/**
+ * IBM Carbon Design System Confirmation Dialog
+ * 
+ * A specialized modal for confirmation actions.
+ * Uses danger styling for destructive actions.
+ * 
+ * Supports both new props (message, confirmText, cancelText, isDanger)
+ * and legacy props (description, confirmLabel, cancelLabel, danger, variant)
+ */
+const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   isOpen,
-  title,
-  description,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
-  onConfirm,
   onClose,
-  variant = 'warning',
-}: ConfirmationDialogProps) {
+  onConfirm,
+  title,
+  message,
+  description, // Legacy fallback
+  confirmText,
+  confirmLabel, // Legacy fallback
+  cancelText,
+  cancelLabel, // Legacy fallback
+  isLoading = false,
+  isDanger = false,
+  danger, // Legacy fallback
+  variant, // Legacy fallback
+}) => {
+  // Handle legacy props
+  const displayMessage = message ?? description ?? '';
+  const displayConfirmText = confirmText ?? confirmLabel ?? 'Confirm';
+  const displayCancelText = cancelText ?? cancelLabel ?? 'Cancel';
+  const isDangerAction = isDanger || danger || variant === 'danger';
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
       title={title}
-      size="sm"
+      danger={isDangerAction}
       footer={
-        <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={onClose}>
-            {cancelLabel}
-          </Button>
-          <Button variant={variant === 'danger' ? 'danger' : 'primary'} onClick={onConfirm}>
-            {confirmLabel}
-          </Button>
-        </div>
+        <ModalFooter
+          onCancel={onClose}
+          onConfirm={onConfirm}
+          cancelText={displayCancelText}
+          confirmText={displayConfirmText}
+          isLoading={isLoading}
+          danger={isDangerAction}
+        />
       }
     >
-      <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-warning-100">
-          <AlertTriangle className="h-5 w-5 text-warning-700" />
-        </div>
-        <p className="text-sm leading-6 text-slate-600">{description}</p>
+      <div className="flex items-start gap-4">
+        {isDangerAction && (
+          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-carbon-red-20 flex items-center justify-center">
+            <AlertTriangle className="w-5 h-5 text-cds-support-error" />
+          </div>
+        )}
+        <p className="text-body-01 text-cds-text-secondary">{displayMessage}</p>
       </div>
     </Modal>
   );
-}
+};
+
+export default ConfirmationDialog;

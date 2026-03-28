@@ -1,7 +1,6 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+// Supabase removed — returns the same no-op client as the browser stub.
+import { supabase } from './client';
 
 export function createClient() {
-  const cookieStore = cookies();
-  return createServerComponentClient({ cookies: () => cookieStore });
+  return supabase;
 }

@@ -191,7 +191,7 @@ export default function AccountingPage() {
               <span>Admin · Accounting Suite</span>
             </div>
             <h1 className="text-2xl font-bold text-slate-900">Accounting</h1>
-            <p className="text-slate-500">Full financial overview — income, expenses, and P&amp;L</p>
+            <p className="text-slate-500">Full financial overview: income, expenses and P&amp;L</p>
           </div>
           <div className="flex gap-3">
             <Button variant="outline" leftIcon={<Download className="w-4 h-4" />}>Export</Button>
@@ -441,8 +441,8 @@ export default function AccountingPage() {
                               {categoryLabels[exp.category as ExpenseCategory] || exp.category}
                             </span>
                           </td>
-                          <td className="py-3 px-4 text-sm text-slate-600">{estate?.name || '—'}</td>
-                          <td className="py-3 px-4 text-sm text-slate-500">{exp.vendorName || '—'}</td>
+                          <td className="py-3 px-4 text-sm text-slate-600">{estate?.name || 'N/A'}</td>
+                          <td className="py-3 px-4 text-sm text-slate-500">{exp.vendorName || 'N/A'}</td>
                           <td className="py-3 px-4 text-sm text-slate-500">{formatDate(exp.date)}</td>
                           <td className="py-3 px-4 text-sm font-bold text-danger-700">{formatCurrency(exp.amount)}</td>
                         </tr>

@@ -2,80 +2,109 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
+import StatusBadge from './StatusBadge';
+import type { StatusType } from './StatusBadge';
+import { StatusIndicator, StatusWithLabel } from './StatusBadge';
 
-type BadgeVariant = 
-  | 'default' 
-  | 'primary' 
-  | 'success' 
-  | 'warning' 
-  | 'danger' 
-  | 'info'
+// Re-export StatusBadge for backward compatibility
+export { StatusBadge, StatusIndicator, StatusWithLabel };
+export type { StatusType };
+
+export type BadgeType = 
+  | 'gray'
+  | 'red'
+  | 'magenta'
+  | 'purple'
+  | 'blue'
+  | 'cyan'
+  | 'teal'
+  | 'green'
+  | 'cool-gray'
+  | 'warm-gray'
+  // Legacy variant support
+  | 'default'
+  | 'secondary'
   | 'outline'
-  | 'ghost';
+  | 'danger'
+  | 'warning'
+  | 'success'
+  | 'info';
 
-type BadgeSize = 'sm' | 'md';
+export type BadgeSize = 'sm' | 'md' | 'lg';
 
-interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?: BadgeVariant;
+interface BadgeProps {
+  children: React.ReactNode;
+  type?: BadgeType;
+  variant?: BadgeType; // Legacy alias for type
   size?: BadgeSize;
-  dot?: boolean;
-  dotColor?: string;
+  className?: string;
+  title?: string;
 }
 
+/**
+ * IBM Carbon Design System Tag/Badge Component
+ * 
+ * Types: gray, red, magenta, purple, blue, cyan, teal, green, cool-gray, warm-gray
+ * Sizes: sm (18px), md (24px)
+ * 
+ * Uses Carbon's tag color tokens for consistent theming
+ */
 const Badge: React.FC<BadgeProps> = ({
   children,
-  variant = 'default',
+  type,
+  variant,
   size = 'md',
-  dot = false,
-  dotColor,
   className,
-  ...props
+  title,
 }) => {
-  const variants: Record<BadgeVariant, string> = {
-    default: 'bg-slate-100 text-slate-700',
-    primary: 'bg-primary-50 text-primary-700 border-primary-200',
-    success: 'bg-success-50 text-success-700 border-success-200',
-    warning: 'bg-warning-50 text-warning-700 border-warning-200',
-    danger: 'bg-danger-50 text-danger-700 border-danger-200',
-    info: 'bg-blue-50 text-blue-700 border-blue-200',
-    outline: 'bg-white text-slate-700 border-slate-200',
-    ghost: 'bg-transparent text-slate-600',
+  // Support both type and variant props
+  const badgeType = type ?? variant ?? 'gray';
+  
+  // Carbon tag colors with legacy mappings
+  const typeStyles: Record<BadgeType, string> = {
+    // Carbon types
+    'gray': 'bg-carbon-gray-20 text-carbon-gray-100',
+    'red': 'bg-carbon-red-20 text-carbon-red-100',
+    'magenta': 'bg-carbon-magenta-20 text-carbon-magenta-100',
+    'purple': 'bg-carbon-purple-20 text-carbon-purple-100',
+    'blue': 'bg-carbon-blue-20 text-carbon-blue-100',
+    'cyan': 'bg-carbon-cyan-20 text-carbon-cyan-100',
+    'teal': 'bg-carbon-teal-20 text-carbon-teal-100',
+    'green': 'bg-carbon-green-20 text-carbon-green-100',
+    'cool-gray': 'bg-carbon-cool-gray-20 text-carbon-cool-gray-100',
+    'warm-gray': 'bg-carbon-warm-gray-20 text-carbon-warm-gray-100',
+    // Legacy type mappings
+    'default': 'bg-carbon-gray-20 text-carbon-gray-100',
+    'secondary': 'bg-carbon-cool-gray-20 text-carbon-cool-gray-100',
+    'outline': 'bg-transparent border border-carbon-gray-50 text-carbon-gray-100',
+    'danger': 'bg-carbon-red-20 text-carbon-red-100',
+    'warning': 'bg-carbon-yellow-20 text-carbon-yellow-100',
+    'success': 'bg-carbon-green-20 text-carbon-green-100',
+    'info': 'bg-carbon-blue-20 text-carbon-blue-100',
   };
 
-  const sizes: Record<BadgeSize, string> = {
-    sm: 'px-2 py-0.5 text-xs',
-    md: 'px-2.5 py-0.5 text-sm',
-  };
-
-  const dotColors: Record<BadgeVariant, string> = {
-    default: 'bg-slate-400',
-    primary: 'bg-primary-500',
-    success: 'bg-success-500',
-    warning: 'bg-warning-500',
-    danger: 'bg-danger-500',
-    info: 'bg-blue-500',
-    outline: 'bg-slate-400',
-    ghost: 'bg-slate-400',
+  // Carbon tag sizes
+  const sizeStyles: Record<BadgeSize, string> = {
+    'sm': 'min-h-[1.125rem] px-2 text-legal-01',
+    'md': 'min-h-6 px-3 text-body-compact-01',
+    'lg': 'min-h-8 px-4 text-body-01',
   };
 
   return (
     <span
+      title={title}
       className={cn(
-        'inline-flex items-center font-medium rounded-full border',
-        variants[variant],
-        sizes[size],
+        // Base Carbon tag styles
+        'inline-flex items-center',
+        'font-carbon font-normal',
+        'border-0',
+        'transition-colors duration-fast-01',
+        // Type and size
+        typeStyles[badgeType],
+        sizeStyles[size],
         className
       )}
-      {...props}
     >
-      {dot && (
-        <span
-          className={cn(
-            'w-1.5 h-1.5 rounded-full mr-1.5',
-            dotColor || dotColors[variant]
-          )}
-        />
-      )}
       {children}
     </span>
   );
@@ -83,56 +112,87 @@ const Badge: React.FC<BadgeProps> = ({
 
 export default Badge;
 
-// Status Badge for common status values
-interface StatusBadgeProps extends Omit<BadgeProps, 'variant'> {
-  status: string;
+// Filter Tag variant for removable tags
+interface FilterTagProps extends BadgeProps {
+  onRemove?: () => void;
 }
 
-export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, ...props }) => {
-  const statusConfig: Record<string, BadgeVariant> = {
-    // Property statuses
-    vacant: 'default',
-    occupied: 'success',
-    maintenance: 'warning',
-    inactive: 'default',
-    
-    // Tenant statuses
-    active: 'success',
-    pending: 'warning',
-    evicted: 'danger',
-    
-    // Payment statuses
-    paid: 'success',
-    overdue: 'danger',
-    partial: 'warning',
-    failed: 'danger',
-    
-    // Lease statuses
-    expired: 'default',
-    terminated: 'danger',
-    
-    // Lead statuses
-    new: 'info',
-    contacted: 'primary',
-    viewing_scheduled: 'warning',
-    application_submitted: 'primary',
-    approved: 'success',
-    rejected: 'danger',
-    converted: 'success',
-    
-    // Maintenance statuses
-    reported: 'info',
-    assigned: 'primary',
-    in_progress: 'warning',
-    completed: 'success',
-    cancelled: 'danger',
+export const FilterTag: React.FC<FilterTagProps> = ({
+  children,
+  type = 'gray',
+  variant,
+  size = 'md',
+  className,
+  onRemove,
+  ...props
+}) => {
+  const badgeType = type ?? variant ?? 'gray';
+  
+  const typeStyles: Record<BadgeType, string> = {
+    'gray': 'bg-carbon-gray-20 text-carbon-gray-100 hover:bg-carbon-gray-30',
+    'red': 'bg-carbon-red-20 text-carbon-red-100 hover:bg-carbon-red-30',
+    'magenta': 'bg-carbon-magenta-20 text-carbon-magenta-100 hover:bg-carbon-magenta-30',
+    'purple': 'bg-carbon-purple-20 text-carbon-purple-100 hover:bg-carbon-purple-30',
+    'blue': 'bg-carbon-blue-20 text-carbon-blue-100 hover:bg-carbon-blue-30',
+    'cyan': 'bg-carbon-cyan-20 text-carbon-cyan-100 hover:bg-carbon-cyan-30',
+    'teal': 'bg-carbon-teal-20 text-carbon-teal-100 hover:bg-carbon-teal-30',
+    'green': 'bg-carbon-green-20 text-carbon-green-100 hover:bg-carbon-green-30',
+    'cool-gray': 'bg-carbon-cool-gray-20 text-carbon-cool-gray-100 hover:bg-carbon-cool-gray-30',
+    'warm-gray': 'bg-carbon-warm-gray-20 text-carbon-warm-gray-100 hover:bg-carbon-warm-gray-30',
+    // Legacy
+    'default': 'bg-carbon-gray-20 text-carbon-gray-100 hover:bg-carbon-gray-30',
+    'secondary': 'bg-carbon-cool-gray-20 text-carbon-cool-gray-100 hover:bg-carbon-cool-gray-30',
+    'outline': 'bg-transparent border border-carbon-gray-50 text-carbon-gray-100 hover:bg-carbon-gray-10',
+    'danger': 'bg-carbon-red-20 text-carbon-red-100 hover:bg-carbon-red-30',
+    'warning': 'bg-carbon-yellow-20 text-carbon-yellow-100 hover:bg-carbon-yellow-30',
+    'success': 'bg-carbon-green-20 text-carbon-green-100 hover:bg-carbon-green-30',
+    'info': 'bg-carbon-blue-20 text-carbon-blue-100 hover:bg-carbon-blue-30',
   };
 
-  const variant = statusConfig[status.toLowerCase()] || 'default';
-  
+  const sizeStyles: Record<BadgeSize, string> = {
+    'sm': 'min-h-[1.125rem] pl-2 pr-1 text-legal-01 gap-1',
+    'md': 'min-h-6 pl-3 pr-2 text-body-compact-01 gap-2',
+    'lg': 'min-h-8 pl-4 pr-3 text-body-01 gap-2',
+  };
+
   return (
-    <Badge variant={variant} {...props}>
-      {status.replace(/_/g, ' ')}
-    </Badge>
+    <span
+      className={cn(
+        'inline-flex items-center',
+        'font-carbon font-normal',
+        'border-0',
+        'transition-colors duration-fast-01',
+        typeStyles[badgeType],
+        sizeStyles[size],
+        className
+      )}
+      {...props}
+    >
+      <span className="truncate">{children}</span>
+      {onRemove && (
+        <button
+          type="button"
+          onClick={onRemove}
+          className="inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-current hover:bg-opacity-20 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+          aria-label="Remove"
+        >
+          <svg
+            width="8"
+            height="8"
+            viewBox="0 0 8 8"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M1 1L4 4M4 4L1 7M4 4L7 7M4 4L7 1"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+      )}
+    </span>
   );
 };

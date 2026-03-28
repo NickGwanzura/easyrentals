@@ -1,35 +1,131 @@
+/* IBM Carbon Design System - Global Styles */
+
+/* Import IBM Plex fonts */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+/* Import Carbon base styles */
+@use '@carbon/react';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 15, 23, 42;
-  --background-start-rgb: 248, 250, 252;
-  --background-end-rgb: 255, 255, 255;
+  /* Carbon Color Tokens - White Theme */
+  --cds-background: #ffffff;
+  --cds-background-hover: rgba(141, 141, 141, 0.12);
+  --cds-background-active: rgba(141, 141, 141, 0.5);
+  --cds-background-selected: rgba(141, 141, 141, 0.2);
+  --cds-background-selected-hover: rgba(141, 141, 141, 0.32);
   
-  /* Brand Colors - Default values (will be overridden by branding context) */
-  --brand-primary: #2563eb;
-  --brand-primary-light: #3b82f6;
-  --brand-primary-dark: #1d4ed8;
-  --brand-secondary: #64748b;
-  --brand-accent: #f59e0b;
-  --brand-background: #f8fafc;
-  --brand-surface: #ffffff;
-  --brand-text: #0f172a;
-  --brand-text-muted: #64748b;
+  --cds-layer-01: #f4f4f4;
+  --cds-layer-02: #ffffff;
+  --cds-layer-03: #f4f4f4;
+  --cds-layer-hover-01: #e8e8e8;
+  --cds-layer-active-01: #c6c6c6;
+  --cds-layer-selected-01: #e0e0e0;
+  --cds-layer-selected-hover-01: #d1d1d1;
   
-  /* Brand color scale - generated from primary */
-  --brand-primary-50: #eff6ff;
-  --brand-primary-100: #dbeafe;
-  --brand-primary-200: #bfdbfe;
-  --brand-primary-300: #93c5fd;
-  --brand-primary-400: #60a5fa;
-  --brand-primary-500: #3b82f6;
-  --brand-primary-600: #2563eb;
-  --brand-primary-700: #1d4ed8;
-  --brand-primary-800: #1e40af;
-  --brand-primary-900: #1e3a8a;
-  --brand-primary-950: #172554;
+  --cds-border-subtle-00: #e0e0e0;
+  --cds-border-subtle-01: #c6c6c6;
+  --cds-border-strong-01: #8d8d8d;
+  --cds-border-interactive: #0f62fe;
+  --cds-border-inverse: #161616;
+  --cds-border-disabled: #c6c6c6;
+  
+  --cds-text-primary: #161616;
+  --cds-text-secondary: #525252;
+  --cds-text-placeholder: #a8a8a8;
+  --cds-text-helper: #6f6f6f;
+  --cds-text-error: #da1e28;
+  --cds-text-inverse: #ffffff;
+  --cds-text-on-color: #ffffff;
+  --cds-text-disabled: rgba(22, 22, 22, 0.25);
+  
+  --cds-link-primary: #0f62fe;
+  --cds-link-primary-hover: #0043ce;
+  
+  --cds-icon-primary: #161616;
+  --cds-icon-secondary: #525252;
+  --cds-icon-interactive: #0f62fe;
+  
+  --cds-support-error: #da1e28;
+  --cds-support-success: #24a148;
+  --cds-support-warning: #f1c21b;
+  --cds-support-info: #0043ce;
+  
+  --cds-button-primary: #0f62fe;
+  --cds-button-primary-hover: #0353e9;
+  --cds-button-secondary: #393939;
+  --cds-button-secondary-hover: #4c4c4c;
+  --cds-button-tertiary: #0f62fe;
+  --cds-button-danger-primary: #da1e28;
+  --cds-button-danger-primary-hover: #ba1b23;
+  --cds-button-disabled: #c6c6c6;
+  
+  --cds-focus: #0f62fe;
+  --cds-focus-inset: #ffffff;
+  --cds-focus-inverse: #ffffff;
+  --cds-highlight: #d0e2ff;
+  
+  --cds-overlay: rgba(22, 22, 22, 0.5);
+  --cds-skeleton-element: #c6c6c6;
+  --cds-skeleton-background: #e5e5e5;
+  
+  /* Carbon Spacing Scale */
+  --cds-spacing-01: 0.125rem;
+  --cds-spacing-02: 0.25rem;
+  --cds-spacing-03: 0.5rem;
+  --cds-spacing-04: 0.75rem;
+  --cds-spacing-05: 1rem;
+  --cds-spacing-06: 1.5rem;
+  --cds-spacing-07: 2rem;
+  --cds-spacing-08: 2.5rem;
+  --cds-spacing-09: 3rem;
+  --cds-spacing-10: 4rem;
+  --cds-spacing-11: 5rem;
+  --cds-spacing-12: 6rem;
+  --cds-spacing-13: 10rem;
+  
+  /* Carbon Layout Scale */
+  --cds-layout-01: 1rem;
+  --cds-layout-02: 1.5rem;
+  --cds-layout-03: 2rem;
+  --cds-layout-04: 3rem;
+  --cds-layout-05: 4rem;
+  --cds-layout-06: 6rem;
+  --cds-layout-07: 10rem;
+  
+  /* Carbon Border Radius */
+  --cds-border-radius: 0;
+  --cds-button-border-radius: 0;
+  
+  /* Carbon Typography */
+  --cds-font-family: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
+  --cds-font-family-mono: 'IBM Plex Mono', 'Menlo', 'DejaVu Sans Mono', monospace;
+  
+  /* Carbon Motion */
+  --cds-duration-fast-01: 70ms;
+  --cds-duration-fast-02: 110ms;
+  --cds-duration-moderate-01: 150ms;
+  --cds-duration-moderate-02: 240ms;
+  --cds-duration-slow-01: 400ms;
+  --cds-duration-slow-02: 700ms;
+  
+  --cds-easing-productive: cubic-bezier(0.2, 0, 0.38, 0.9);
+  --cds-easing-expressive: cubic-bezier(0.4, 0.14, 0.3, 1);
+  
+  /* Carbon Z-Index */
+  --cds-z-index-background: -1;
+  --cds-z-index-base: 0;
+  --cds-z-index-dropdown: 6000;
+  --cds-z-index-sticky: 7000;
+  --cds-z-index-banner: 8000;
+  --cds-z-index-overlay: 9000;
+  --cds-z-index-modal: 10000;
+  --cds-z-index-popover: 11000;
+  --cds-z-index-toast: 12000;
+  --cds-z-index-tooltip: 13000;
 }
 
 * {
@@ -38,53 +134,165 @@
   margin: 0;
 }
 
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  font-family: var(--cds-font-family);
+  background-color: var(--cds-background);
+  color: var(--cds-text-primary);
+  line-height: 1.5;
+  max-width: 100vw;
+  overflow-x: hidden;
   min-height: 100vh;
 }
 
-/* Custom scrollbar */
+/* IBM Plex Mono for code/monospace */
+code, pre, kbd, samp {
+  font-family: var(--cds-font-family-mono);
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--cds-font-family);
+  font-weight: 600;
+  color: var(--cds-text-primary);
+  margin-bottom: var(--cds-spacing-05);
+}
+
+/* Carbon-style focus visible */
+*:focus-visible {
+  outline: 2px solid var(--cds-focus);
+  outline-offset: -2px;
+}
+
+/* Selection */
+::selection {
+  background-color: var(--cds-highlight);
+  color: var(--cds-text-primary);
+}
+
+/* Carbon-style scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 4px;
+  background: var(--cds-layer-01);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
+  background: var(--cds-border-subtle-01);
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: var(--cds-border-strong-01);
 }
 
-/* Animations */
-@keyframes fadeIn {
+/* Links */
+a {
+  color: var(--cds-link-primary);
+  text-decoration: none;
+  transition: color var(--cds-duration-fast-01) var(--cds-easing-productive);
+}
+
+a:hover {
+  color: var(--cds-link-primary-hover);
+  text-decoration: underline;
+}
+
+/* Typography helpers */
+.cds-text-heading-compact-01 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.28572;
+  letter-spacing: 0.16px;
+}
+
+.cds-text-heading-01 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.42857;
+  letter-spacing: 0.16px;
+}
+
+.cds-text-heading-02 {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
+.cds-text-heading-03 {
+  font-size: 1.25rem;
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: 0;
+}
+
+.cds-text-heading-04 {
+  font-size: 1.75rem;
+  font-weight: 400;
+  line-height: 1.28572;
+  letter-spacing: 0;
+}
+
+.cds-text-body-compact-01 {
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.28572;
+  letter-spacing: 0.16px;
+}
+
+.cds-text-body-compact-02 {
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.375;
+  letter-spacing: 0;
+}
+
+.cds-text-body-01 {
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.42857;
+  letter-spacing: 0.16px;
+}
+
+.cds-text-body-02 {
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
+.cds-text-helper-01 {
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.33333;
+  letter-spacing: 0.32px;
+}
+
+/* Animation utilities */
+.cds-fade-in {
+  animation: cdsFadeIn var(--cds-duration-moderate-01) var(--cds-easing-productive);
+}
+
+.cds-slide-in {
+  animation: cdsSlideIn var(--cds-duration-moderate-01) var(--cds-easing-productive);
+}
+
+@keyframes cdsFadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
-@keyframes slideUp {
+@keyframes cdsSlideIn {
   from { 
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(var(--cds-spacing-03));
   }
   to { 
     opacity: 1;
@@ -92,64 +300,33 @@ body {
   }
 }
 
-@keyframes slideInRight {
-  from { 
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to { 
-    opacity: 1;
-    transform: translateX(0);
-  }
+/* Layer backgrounds */
+.cds-layer-01 {
+  background-color: var(--cds-layer-01);
 }
 
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+.cds-layer-02 {
+  background-color: var(--cds-layer-02);
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-out;
+/* Skeleton loading */
+.cds-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--cds-skeleton-background) 0%,
+    var(--cds-skeleton-element) 50%,
+    var(--cds-skeleton-background) 100%
+  );
+  background-size: 200% 100%;
+  animation: cdsSkeleton 1000ms infinite;
 }
 
-.animate-slide-up {
-  animation: slideUp 0.4s ease-out;
+@keyframes cdsSkeleton {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
 }
 
-.animate-slide-in-right {
-  animation: slideInRight 0.3s ease-out;
-}
-
-/* Glass effect */
-.glass {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-/* Card hover */
-.card-hover {
-  transition: all 0.3s ease;
-}
-
-.card-hover:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.1);
-}
-
-/* Button press */
-.btn-press:active {
-  transform: scale(0.98);
-}
-
-/* Gradient text */
-.gradient-text {
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
+/* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -159,9 +336,29 @@ body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+  
+  .cds-skeleton {
+    animation: none;
+    background: var(--cds-skeleton-background);
+  }
+}
 
-  .card-hover:hover,
-  .btn-press:active {
-    transform: none !important;
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :focus-visible {
+    outline: 3px solid currentColor;
+    outline-offset: 2px;
+  }
+}
+
+/* Print styles */
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+  
+  .cds-no-print {
+    display: none !important;
   }
 }

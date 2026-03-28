@@ -44,6 +44,7 @@ export const estateManagementNavigation: NavItem[] = [
   { name: 'Units', href: '/estates/estate-units', icon: HomeIcon, roles: ['admin', 'landlord', 'agent'] },
   { name: 'Levies', href: '/levies', icon: Wallet, roles: ['admin', 'landlord', 'agent'] },
   { name: 'Moves', href: '/estate-moves', icon: ArrowRightLeft, roles: ['admin', 'landlord', 'agent'] },
+  { name: 'Billing', href: '/billing', icon: Receipt, roles: ['admin', 'landlord'] },
 ];
 
 export const adminAccountingNavigation: NavItem[] = [
