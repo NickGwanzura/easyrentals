@@ -305,12 +305,19 @@ function LoginContent() {
                   Sign in
                 </Button>
 
+                <p className="text-center text-sm mt-6" style={{ color: colors.textMuted }}>
+                  Don&apos;t have an account?{' '}
+                  <Link href="/signup" className="font-medium hover:underline" style={{ color: colors.primary }}>
+                    Create account
+                  </Link>
+                </p>
+
                 <div className="relative my-6">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t" style={{ borderColor: `${colors.secondary}20` }}></div>
                   </div>
                   <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-white" style={{ color: colors.textMuted }}>Or</span>
+                    <span className="px-2 bg-white" style={{ color: colors.textMuted }}>Or try demo</span>
                   </div>
                 </div>
 

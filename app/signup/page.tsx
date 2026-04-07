@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { Eye, EyeOff, Home, User, ArrowRight, Building2, Users } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-const signUp = async (_args: any) => { throw new Error('Sign up is not available in demo mode. Please use the demo accounts on the login page.'); };
+import { signUp } from '@/lib/supabase/auth';
 import { UserRole } from '@/types';
 
 const roles = [

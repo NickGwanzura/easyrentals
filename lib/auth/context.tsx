@@ -4,6 +4,8 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { UserRole, AuthState } from '@/types';
 import { useRouter, usePathname } from 'next/navigation';
 import { validateDemoCredentials, DEMO_CREDENTIALS } from '@/lib/mockData';
+import { getCurrentUser, signIn, signOut, onAuthStateChange } from '@/lib/supabase/auth';
+import { getUserCompanies } from '@/lib/whitelabel/company-service';
 
 interface CompanyInfo {
   id: string;
@@ -51,13 +53,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Load from localStorage on mount
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      setState(prev => ({ ...prev, isLoading: false }));
-      return;
-    }
+  const loadSupabaseSession = async () => {
+    try {
+      const user = await getCurrentUser();
+      if (user) {
+        const companies = await getUserCompanies(user.id);
+        const mappedCompanies = companies.map(c => ({
+          id: c.id,
+          name: c.name,
+          slug: c.slug,
+          role: (c as any).user_role || 'admin',
+        }));
 
+        setState({
+          user,
+          isAuthenticated: true,
+          isLoading: false,
+          isDemoMode: false,
+          isSupabaseAuth: true,
+        });
+        setUserCompanies(mappedCompanies);
+        setCurrentCompany(mappedCompanies[0] || null);
+        return true;
+      }
+    } catch (e) {
+      console.error('Supabase session load error:', e);
+    }
+    return false;
+  };
+
+  const loadDemoSession = () => {
     try {
       const storedDemoUser = localStorage.getItem('demoUser');
       const isDemo = localStorage.getItem('isDemoMode') === 'true';
@@ -72,12 +97,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isSupabaseAuth: false,
         });
         setCurrentCompany(DEMO_COMPANY);
-      } else {
-        setState(prev => ({ ...prev, isLoading: false }));
+        return true;
       }
     } catch {
-      setState(prev => ({ ...prev, isLoading: false }));
+      // ignore
     }
+    return false;
+  };
+
+  // Load auth state on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      setState(prev => ({ ...prev, isLoading: false }));
+      return;
+    }
+
+    let isMounted = true;
+
+    (async () => {
+      const hasSupabase = await loadSupabaseSession();
+      if (!isMounted) return;
+      if (!hasSupabase) {
+        const hasDemo = loadDemoSession();
+        if (!hasDemo) {
+          setState(prev => ({ ...prev, isLoading: false }));
+        }
+      }
+    })();
+
+    return () => { isMounted = false; };
+  }, []);
+
+  // Listen to Supabase auth state changes
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const { data: { subscription } } = onAuthStateChange(async (event) => {
+      if (event === 'SIGNED_IN') {
+        await loadSupabaseSession();
+      } else if (event === 'SIGNED_OUT') {
+        localStorage.removeItem('demoUser');
+        localStorage.removeItem('isDemoMode');
+        setState({
+          user: null,
+          isAuthenticated: false,
+          isLoading: false,
+          isDemoMode: false,
+          isSupabaseAuth: false,
+        });
+        setCurrentCompany(null);
+        setUserCompanies([]);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Route protection
@@ -99,8 +174,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [state.isAuthenticated, state.isLoading, pathname, router]);
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    const demoUser = validateDemoCredentials(email, password);
+    // Try Supabase auth first
+    try {
+      await signIn({ email, password });
+      const user = await getCurrentUser();
+      if (user) {
+        const companies = await getUserCompanies(user.id);
+        const mappedCompanies = companies.map(c => ({
+          id: c.id,
+          name: c.name,
+          slug: c.slug,
+          role: (c as any).user_role || 'admin',
+        }));
 
+        setState({
+          user,
+          isAuthenticated: true,
+          isLoading: false,
+          isDemoMode: false,
+          isSupabaseAuth: true,
+        });
+        setUserCompanies(mappedCompanies);
+        setCurrentCompany(mappedCompanies[0] || null);
+        return { success: true };
+      }
+    } catch (supabaseErr: any) {
+      // If Supabase auth fails, continue to demo fallback only if credentials match demo
+    }
+
+    // Demo fallback
+    const demoUser = validateDemoCredentials(email, password);
     if (demoUser) {
       const isDemo = Object.values(DEMO_CREDENTIALS).some(
         (c: { email: string }) => c.email.toLowerCase() === email.toLowerCase()
@@ -120,10 +223,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: true };
     }
 
-    return { success: false, error: 'Invalid email or password. Use the demo accounts to access the platform.' };
+    return { success: false, error: 'Invalid email or password.' };
   };
 
   const logout = async () => {
+    if (state.isSupabaseAuth) {
+      try {
+        await signOut();
+      } catch (e) {
+        console.error('Supabase signOut error:', e);
+      }
+    }
+
     localStorage.removeItem('demoUser');
     localStorage.removeItem('isDemoMode');
 
@@ -165,7 +276,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (company) setCurrentCompany(company);
   };
 
-  const refreshCompanies = async () => {};
+  const refreshCompanies = async () => {
+    if (!state.user || state.isDemoMode) return;
+    const companies = await getUserCompanies(state.user.id);
+    const mappedCompanies = companies.map(c => ({
+      id: c.id,
+      name: c.name,
+      slug: c.slug,
+      role: (c as any).user_role || 'admin',
+    }));
+    setUserCompanies(mappedCompanies);
+    if (!currentCompany || !mappedCompanies.find(c => c.id === currentCompany.id)) {
+      setCurrentCompany(mappedCompanies[0] || null);
+    }
+  };
 
   return (
     <AuthContext.Provider

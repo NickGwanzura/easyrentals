@@ -5,7 +5,7 @@ import { ToastProvider } from '@/components/ui/Toast';
 import { BrandingProvider } from '@/lib/branding/context';
 import { WorkflowProvider } from '@/lib/workflow/context';
 import { getCurrentCompany, generateBrandingCSS } from '@/lib/whitelabel/server';
-import SiteLock from '@/components/SiteLock';
+
 
 // IBM Carbon Design System styles
 import '@carbon/styles/css/styles.css';
@@ -75,17 +75,15 @@ export default async function RootLayout({
         )}
       </head>
       <body className="font-carbon antialiased">
-        <SiteLock>
-          <AuthProvider>
-            <WorkflowProvider>
-              <BrandingProvider initialCompany={company}>
-                <ToastProvider>
-                  {children}
-                </ToastProvider>
-              </BrandingProvider>
-            </WorkflowProvider>
-          </AuthProvider>
-        </SiteLock>
+        <AuthProvider>
+          <WorkflowProvider>
+            <BrandingProvider initialCompany={company}>
+              <ToastProvider>
+                {children}
+              </ToastProvider>
+            </BrandingProvider>
+          </WorkflowProvider>
+        </AuthProvider>
       </body>
     </html>
   );
