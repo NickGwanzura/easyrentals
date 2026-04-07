@@ -1,50 +1,55 @@
 /**
  * POST /api/auth/sync
- * Called client-side after Auth0 login to upsert the Auth0 user into Neon.
- * Returns the user's Neon profile (including role and company info).
+ * Called client-side after login to ensure the Better Auth user exists
+ * in our business `users` table, then returns company memberships.
  */
 import { NextResponse } from 'next/server';
-import { auth0 } from '@/lib/auth0';
+import { auth } from '@/lib/auth';
 import { sql } from '@/lib/db/client';
+import { headers } from 'next/headers';
 
 export async function POST() {
-  const session = await auth0.getSession();
+  const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session?.user) {
     return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
   }
 
-  const { sub, email, name, picture } = session.user;
-  const nameParts = (name || '').split(' ');
-  const firstName = nameParts[0] || '';
-  const lastName = nameParts.slice(1).join(' ') || '';
+  const u = session.user as any;
+  const firstName = u.firstName || u.name?.split(' ')[0] || '';
+  const lastName  = u.lastName  || u.name?.split(' ').slice(1).join(' ') || '';
+  const role      = u.role || 'tenant';
 
-  // Upsert user into Neon — preserve existing role if already set
-  const rows = await sql`
-    INSERT INTO users (auth0_sub, email, first_name, last_name, avatar_url, email_verified)
-    VALUES (${sub}, ${email}, ${firstName}, ${lastName}, ${picture ?? null}, true)
-    ON CONFLICT (auth0_sub) DO UPDATE SET
-      email         = EXCLUDED.email,
-      first_name    = COALESCE(NULLIF(users.first_name, ''), EXCLUDED.first_name),
-      last_name     = COALESCE(NULLIF(users.last_name,  ''), EXCLUDED.last_name),
-      avatar_url    = COALESCE(users.avatar_url, EXCLUDED.avatar_url),
-      email_verified = true,
-      updated_at    = NOW()
-    RETURNING id, email, first_name, last_name, role, avatar_url, phone,
-              current_company_id, primary_company_id, created_at
+  // Upsert into business users table
+  await sql`
+    INSERT INTO users (id, email, first_name, last_name, role, avatar_url, email_verified)
+    VALUES (
+      ${u.id}::uuid,
+      ${u.email},
+      ${firstName},
+      ${lastName},
+      ${role},
+      ${u.image ?? null},
+      ${u.emailVerified ?? false}
+    )
+    ON CONFLICT (id) DO UPDATE SET
+      email          = EXCLUDED.email,
+      first_name     = COALESCE(NULLIF(users.first_name, ''), EXCLUDED.first_name),
+      last_name      = COALESCE(NULLIF(users.last_name,  ''), EXCLUDED.last_name),
+      avatar_url     = COALESCE(users.avatar_url, EXCLUDED.avatar_url),
+      email_verified = EXCLUDED.email_verified,
+      updated_at     = NOW()
   `;
 
-  const user = rows[0];
-
-  // Fetch company memberships
+  // Return company memberships
   const companies = await sql`
     SELECT cu.role AS user_role, c.id, c.name, c.slug
     FROM company_users cu
     JOIN companies c ON c.id = cu.company_id
-    WHERE cu.user_id = ${user.id}
+    WHERE cu.user_id = ${u.id}::uuid
       AND cu.invitation_status = 'active'
     ORDER BY cu.joined_at ASC
   `;
 
-  return NextResponse.json({ user, companies });
+  return NextResponse.json({ user: u, companies });
 }

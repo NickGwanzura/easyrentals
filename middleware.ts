@@ -1,4 +1,3 @@
-import { auth0 } from '@/lib/auth0';
 import { type NextRequest, NextResponse } from 'next/server';
 
 // Routes that require authentication
@@ -16,25 +15,39 @@ const PROTECTED_PREFIXES = [
   '/signup/company',
 ];
 
-export async function middleware(request: NextRequest) {
-  // Let Auth0 middleware handle /auth/* routes (login, logout, callback, profile)
-  // and inject session cookies into all other responses.
-  const response = await auth0.middleware(request);
+// Better Auth session cookie names (dev vs production)
+const SESSION_COOKIE_NAMES = [
+  'better-auth.session_token',
+  '__Secure-better-auth.session_token',
+];
 
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Skip static files and Next.js internals
+  if (
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/api/auth') ||
+    pathname.match(/\.(ico|svg|png|jpg|jpeg|gif|webp)$/)
+  ) {
+    return NextResponse.next();
+  }
+
   const isProtected = PROTECTED_PREFIXES.some(p => pathname.startsWith(p));
 
   if (isProtected) {
-    // Check for Auth0 session cookie — if absent, redirect to login
-    const hasSession = request.cookies.has('__session') || request.cookies.has('appSession');
+    const hasSession = SESSION_COOKIE_NAMES.some(name =>
+      request.cookies.has(name)
+    );
+
     if (!hasSession) {
-      const loginUrl = new URL('/auth/login', request.url);
-      loginUrl.searchParams.set('returnTo', pathname);
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('callbackUrl', pathname);
       return NextResponse.redirect(loginUrl);
     }
   }
 
-  return response;
+  return NextResponse.next();
 }
 
 export const config = {

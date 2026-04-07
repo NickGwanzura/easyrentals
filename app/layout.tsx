@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next';
 import { IBM_Plex_Sans, IBM_Plex_Mono } from 'next/font/google';
-import { Auth0Provider } from '@auth0/nextjs-auth0/client';
 import { AuthProvider } from '@/lib/auth/context';
 import { ToastProvider } from '@/components/ui/Toast';
 import { BrandingProvider } from '@/lib/branding/context';
@@ -76,17 +75,15 @@ export default async function RootLayout({
         )}
       </head>
       <body className="font-carbon antialiased">
-        <Auth0Provider>
-          <AuthProvider>
-            <WorkflowProvider>
-              <BrandingProvider initialCompany={company}>
-                <ToastProvider>
-                  {children}
-                </ToastProvider>
-              </BrandingProvider>
-            </WorkflowProvider>
-          </AuthProvider>
-        </Auth0Provider>
+        <AuthProvider>
+          <WorkflowProvider>
+            <BrandingProvider initialCompany={company}>
+              <ToastProvider>
+                {children}
+              </ToastProvider>
+            </BrandingProvider>
+          </WorkflowProvider>
+        </AuthProvider>
       </body>
     </html>
   );
