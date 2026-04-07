@@ -1,8 +1,8 @@
 /**
- * Company Service - Database operations for multi-tenant functionality
+ * Company Service - Neon-backed multi-tenant operations.
+ * Auth is handled by Auth0; server routes use auth0.getSession().
  */
-
-import { supabase } from '@/lib/supabase/client';
+import { sql } from '@/lib/db/client';
 import type { Company } from './server';
 import { syncAccountCompanyContext } from '@/lib/auth/account-records';
 
@@ -12,7 +12,7 @@ export interface CreateCompanyInput {
   custom_domain?: string;
   logo_url?: string;
   primary_color?: string;
-  owner_id?: string;
+  owner_id: string;
 }
 
 export interface UpdateCompanyInput {
@@ -47,346 +47,145 @@ export interface CompanyUser {
   joined_at: string;
 }
 
-async function getAuthenticatedUser() {
-  const { data: { user } } = await supabase.auth.getUser();
+// ── Queries ─────────────────────────────────────────────────────────────────
 
-  if (!user) {
-    throw new Error('You must be signed in to perform this action.');
-  }
-
-  return user;
-}
-
-async function getCurrentUserRole(userId: string): Promise<string | null> {
-  const profileResult = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', userId)
-    .maybeSingle();
-
-  if (profileResult.data?.role) {
-    return profileResult.data.role;
-  }
-
-  const userResult = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', userId)
-    .maybeSingle();
-
-  return userResult.data?.role ?? null;
-}
-
-async function requirePlatformAdmin() {
-  const user = await getAuthenticatedUser();
-  const role = await getCurrentUserRole(user.id);
-
-  if (role !== 'admin') {
-    throw new Error('Admin access required.');
-  }
-
-  return user;
-}
-
-/**
- * Check if a slug is available
- */
 export async function isSlugAvailable(slug: string): Promise<boolean> {
-  const { data } = await supabase
-    .from('companies')
-    .select('id')
-    .eq('slug', slug)
-    .single();
-  
-  return !data;
+  const rows = await sql`SELECT id FROM companies WHERE slug = ${slug} LIMIT 1`;
+  return rows.length === 0;
 }
 
-/**
- * Check if a custom domain is available
- */
 export async function isDomainAvailable(domain: string): Promise<boolean> {
-  const { data } = await supabase
-    .from('companies')
-    .select('id')
-    .eq('custom_domain', domain)
-    .single();
-  
-  return !data;
+  const rows = await sql`SELECT id FROM companies WHERE custom_domain = ${domain} LIMIT 1`;
+  return rows.length === 0;
 }
 
-/**
- * Create a new company
- */
-export async function createCompany(input: CreateCompanyInput): Promise<Company | null> {
-  const user = await getAuthenticatedUser();
-
-  // Check if slug is available
+export async function createCompany(input: CreateCompanyInput): Promise<Company> {
   const available = await isSlugAvailable(input.slug);
-  if (!available) {
-    throw new Error('Slug is already taken');
-  }
+  if (!available) throw new Error('Slug is already taken');
 
-  const ownerId = input.owner_id || user.id;
-  
-  // Create company
-  const { data: company, error } = await supabase
-    .from('companies')
-    .insert({
-      name: input.name,
-      slug: input.slug,
-      custom_domain: input.custom_domain,
-      logo_url: input.logo_url,
-      primary_color: input.primary_color,
-      owner_id: ownerId,
-      status: 'active',
-    })
-    .select()
-    .single();
-  
-  if (error) {
-    console.error('Error creating company:', error);
-    throw error;
-  }
-  
-  // Add owner as company user if provided
-  if (ownerId) {
-    await supabase.from('company_users').insert({
-      company_id: company.id,
-      user_id: ownerId,
-      role: 'owner',
-      invitation_status: 'active',
-    });
-    
-    // Update the active company context for the owner.
-    await syncAccountCompanyContext(ownerId, company.id, { setPrimaryCompany: true });
-  }
-  
+  const rows = await sql`
+    INSERT INTO companies (name, slug, custom_domain, logo_url, primary_color, owner_id, status)
+    VALUES (
+      ${input.name},
+      ${input.slug},
+      ${input.custom_domain ?? null},
+      ${input.logo_url ?? null},
+      ${input.primary_color ?? '#2563eb'},
+      ${input.owner_id}::uuid,
+      'active'
+    )
+    RETURNING *
+  `;
+  const company = rows[0] as Company;
+
+  // Add owner as active member
+  await sql`
+    INSERT INTO company_users (company_id, user_id, role, invitation_status)
+    VALUES (${company.id}::uuid, ${input.owner_id}::uuid, 'owner', 'active')
+    ON CONFLICT (company_id, user_id) DO NOTHING
+  `;
+
+  // Set as user's primary company
+  await syncAccountCompanyContext(input.owner_id, company.id, { setPrimaryCompany: true });
+
   return company;
 }
 
-/**
- * Update company
- */
-export async function updateCompany(
-  companyId: string, 
-  input: UpdateCompanyInput
-): Promise<Company | null> {
-  await requirePlatformAdmin();
+export async function updateCompany(companyId: string, input: UpdateCompanyInput): Promise<Company | null> {
+  const fields = Object.entries(input)
+    .filter(([, v]) => v !== undefined)
+    .map(([k]) => k);
 
-  const { data, error } = await supabase
-    .from('companies')
-    .update({
-      ...input,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', companyId)
-    .select()
-    .single();
-  
-  if (error) {
-    console.error('Error updating company:', error);
-    throw error;
-  }
-  
-  return data;
+  if (fields.length === 0) return getCompanyById(companyId);
+
+  const setClauses = fields.map((k, i) => `"${k}" = $${i + 2}`).join(', ');
+  const values = [companyId, ...fields.map(k => (input as any)[k])];
+
+  const rows = await sql(
+    `UPDATE companies SET ${setClauses}, updated_at = NOW() WHERE id = $1::uuid RETURNING *`,
+    values
+  );
+  return (rows[0] as Company) ?? null;
 }
 
-/**
- * Get company by ID
- */
 export async function getCompanyById(id: string): Promise<Company | null> {
-  const { data } = await supabase
-    .from('companies')
-    .select('*')
-    .eq('id', id)
-    .single();
-  
-  return data;
+  const rows = await sql`SELECT * FROM companies WHERE id = ${id}::uuid LIMIT 1`;
+  return (rows[0] as Company) ?? null;
 }
 
-/**
- * Get all companies for a user
- */
 export async function getUserCompanies(userId: string): Promise<Company[]> {
-  const { data, error } = await supabase
-    .from('company_users')
-    .select(`
-      company_id,
-      role,
-      companies:company_id (*)
-    `)
-    .eq('user_id', userId)
-    .eq('invitation_status', 'active');
-  
-  if (error) {
-    console.error('Error fetching user companies:', error);
-    return [];
-  }
-  
-  return data?.map((item: any) => ({
-    ...item.companies,
-    user_role: item.role,
-  })) || [];
+  const rows = await sql`
+    SELECT c.*, cu.role AS user_role
+    FROM company_users cu
+    JOIN companies c ON c.id = cu.company_id
+    WHERE cu.user_id = ${userId}::uuid
+      AND cu.invitation_status = 'active'
+    ORDER BY cu.joined_at ASC
+  `;
+  return rows as Company[];
 }
 
-/**
- * Get company members
- */
 export async function getCompanyMembers(companyId: string): Promise<any[]> {
-  const { data, error } = await supabase
-    .from('company_users')
-    .select(`
-      *,
-      user:user_id (id, first_name, last_name, email, avatar_url)
-    `)
-    .eq('company_id', companyId)
-    .eq('invitation_status', 'active');
-  
-  if (error) {
-    console.error('Error fetching company members:', error);
-    return [];
-  }
-  
-  return data || [];
+  const rows = await sql`
+    SELECT cu.*,
+           u.id AS user_id, u.first_name, u.last_name, u.email, u.avatar_url
+    FROM company_users cu
+    JOIN users u ON u.id = cu.user_id
+    WHERE cu.company_id = ${companyId}::uuid
+      AND cu.invitation_status = 'active'
+  `;
+  return rows;
 }
 
-/**
- * Invite user to company
- */
 export async function inviteUserToCompany(
   companyId: string,
   userId: string,
-  role: string = 'member',
+  role: string,
   invitedBy: string
 ): Promise<void> {
-  const { error } = await supabase.from('company_users').insert({
-    company_id: companyId,
-    user_id: userId,
-    role,
-    invitation_status: 'pending',
-    invited_by: invitedBy,
-    invited_at: new Date().toISOString(),
-  });
-  
-  if (error) {
-    console.error('Error inviting user:', error);
-    throw error;
-  }
+  await sql`
+    INSERT INTO company_users (company_id, user_id, role, invitation_status, invited_by, invited_at)
+    VALUES (
+      ${companyId}::uuid, ${userId}::uuid, ${role}, 'pending',
+      ${invitedBy}::uuid, NOW()
+    )
+    ON CONFLICT (company_id, user_id) DO NOTHING
+  `;
 }
 
-/**
- * Remove user from company
- */
-export async function removeUserFromCompany(
-  companyId: string,
-  userId: string
-): Promise<void> {
-  const { error } = await supabase
-    .from('company_users')
-    .update({ invitation_status: 'removed' })
-    .eq('company_id', companyId)
-    .eq('user_id', userId);
-  
-  if (error) {
-    console.error('Error removing user:', error);
-    throw error;
-  }
+export async function removeUserFromCompany(companyId: string, userId: string): Promise<void> {
+  await sql`
+    UPDATE company_users
+    SET invitation_status = 'removed'
+    WHERE company_id = ${companyId}::uuid AND user_id = ${userId}::uuid
+  `;
 }
 
-/**
- * Update user role in company
- */
-export async function updateUserRole(
-  companyId: string,
-  userId: string,
-  role: string
-): Promise<void> {
-  const { error } = await supabase
-    .from('company_users')
-    .update({ role })
-    .eq('company_id', companyId)
-    .eq('user_id', userId);
-  
-  if (error) {
-    console.error('Error updating role:', error);
-    throw error;
-  }
+export async function updateUserRole(companyId: string, userId: string, role: string): Promise<void> {
+  await sql`
+    UPDATE company_users
+    SET role = ${role}
+    WHERE company_id = ${companyId}::uuid AND user_id = ${userId}::uuid
+  `;
 }
 
-/**
- * Switch user's current company
- */
 export async function switchCompany(userId: string, companyId: string): Promise<void> {
-  const { data: membership, error: membershipError } = await supabase
-    .from('company_users')
-    .select('company_id')
-    .eq('user_id', userId)
-    .eq('company_id', companyId)
-    .eq('invitation_status', 'active')
-    .maybeSingle();
-
-  if (membershipError) {
-    console.error('Error validating company membership:', membershipError);
-    throw membershipError;
-  }
-
-  if (!membership) {
-    throw new Error('You do not have access to that company.');
-  }
-
+  const rows = await sql`
+    SELECT id FROM company_users
+    WHERE user_id = ${userId}::uuid
+      AND company_id = ${companyId}::uuid
+      AND invitation_status = 'active'
+    LIMIT 1
+  `;
+  if (rows.length === 0) throw new Error('You do not have access to that company.');
   await syncAccountCompanyContext(userId, companyId);
 }
 
-/**
- * Delete company (soft delete)
- */
 export async function deleteCompany(companyId: string): Promise<void> {
-  await requirePlatformAdmin();
-
-  const { error } = await supabase
-    .from('companies')
-    .update({ status: 'inactive' })
-    .eq('id', companyId);
-  
-  if (error) {
-    console.error('Error deleting company:', error);
-    throw error;
-  }
+  await sql`UPDATE companies SET status = 'inactive' WHERE id = ${companyId}::uuid`;
 }
 
-/**
- * Get all companies (admin only)
- */
 export async function getAllCompanies(): Promise<Company[]> {
-  await requirePlatformAdmin();
-
-  const { data, error } = await supabase
-    .from('companies')
-    .select('*')
-    .order('created_at', { ascending: false });
-  
-  if (error) {
-    console.error('Error fetching companies:', error);
-    return [];
-  }
-  
-  return data || [];
-}
-
-/**
- * Get company stats
- */
-export async function getCompanyStats(companyId: string) {
-  const { data, error } = await supabase
-    .from('company_dashboard_stats')
-    .select('*')
-    .eq('company_id', companyId)
-    .single();
-  
-  if (error) {
-    console.error('Error fetching company stats:', error);
-    return null;
-  }
-  
-  return data;
+  const rows = await sql`SELECT * FROM companies ORDER BY created_at DESC`;
+  return rows as Company[];
 }

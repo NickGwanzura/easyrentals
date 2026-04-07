@@ -10,7 +10,6 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
 import { useAuth } from '@/lib/auth/context';
-const resetPassword = async (_email: string) => { throw new Error('Password reset is not available in demo mode.'); };
 import { UserRole } from '@/types';
 
 export const dynamic = 'force-dynamic';
@@ -56,52 +55,24 @@ function LoginContent() {
     }
   }, [router, searchParams, showToast]);
 
+  /** Demo-only inline login — real users redirect to Auth0 */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
-
     const result = await login(email, password);
-    
-    if (!result.success) {
-      setError(result.error || 'Login failed');
-    }
-    
+    if (!result.success) setError(result.error || 'Login failed');
     setIsLoading(false);
   };
 
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-
-    if (!email.trim()) {
-      setError('Enter the email address tied to your account to receive a reset link.');
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      await resetPassword(email.trim());
-      setResetSent(true);
-      showToast('Password reset instructions sent.', 'success');
-    } catch (err: any) {
-      setError(err.message || 'Unable to send reset instructions right now.');
-    } finally {
-      setIsLoading(false);
-    }
+  /** Real-user login via Auth0 Universal Login */
+  const handleAuth0Login = () => {
+    window.location.href = '/auth/login';
   };
 
-  const openReset = () => {
-    setError('');
-    setResetSent(false);
-    setShowReset(true);
-  };
-
-  const backToLogin = () => {
-    setError('');
-    setShowReset(false);
-    setResetSent(false);
+  /** Real-user signup via Auth0 Universal Login */
+  const handleAuth0Signup = () => {
+    window.location.href = '/auth/login?screen_hint=signup';
   };
 
   const handleDemoLogin = async (role: UserRole) => {
@@ -160,190 +131,70 @@ function LoginContent() {
               </div>
             )}
 
-            {showDemo ? (
-              <div className="space-y-3">
+            {/* ── Real-user Auth0 login ── */}
+            <div className="space-y-3 mb-6">
+              <Button
+                type="button"
+                className="w-full"
+                onClick={handleAuth0Login}
+                style={{ backgroundColor: colors.primary }}
+              >
+                Sign in
+              </Button>
+              <button
+                type="button"
+                onClick={handleAuth0Signup}
+                className="w-full text-center py-2.5 rounded-lg font-medium border transition-colors hover:bg-slate-50"
+                style={{ borderColor: `${colors.secondary}30`, color: colors.text }}
+              >
+                Create account
+              </button>
+            </div>
+
+            {/* ── Demo divider ── */}
+            <div className="relative my-5">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t" style={{ borderColor: `${colors.secondary}20` }} />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white" style={{ color: colors.textMuted }}>Or try demo</span>
+              </div>
+            </div>
+
+            {/* ── Demo quick-fill ── */}
+            <form onSubmit={handleSubmit} className="space-y-2">
+              <div className="rounded-xl border-2 border-dashed p-4 space-y-2" style={{ borderColor: `${colors.secondary}25`, backgroundColor: `${colors.primary}04` }}>
+                <p className="text-xs font-semibold uppercase tracking-wider text-center mb-3" style={{ color: colors.textMuted }}>Quick Demo Access</p>
                 {demoAccounts.map((account) => (
                   <button
                     key={account.role}
-                    onClick={() => handleDemoLogin(account.role as UserRole)}
-                    disabled={isLoading}
-                    className="w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all duration-200 hover:shadow-md"
-                    style={{
-                      borderColor: selectedDemo === account.role ? colors.primary : `${colors.secondary}20`,
-                      backgroundColor: selectedDemo === account.role ? `${colors.primary}10` : 'white',
-                    }}
+                    type="button"
+                    onClick={() => { setEmail(account.email); setPassword('demo123'); }}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all hover:shadow-sm text-left"
+                    style={{ borderColor: `${colors.secondary}20`, backgroundColor: 'white' }}
                   >
-                    <div 
-                      className="w-12 h-12 rounded-xl flex items-center justify-center"
-                      style={{ backgroundColor: `${colors.primary}15` }}
-                    >
-                      <account.icon className="w-6 h-6" style={{ color: colors.primary }} />
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${colors.primary}15` }}>
+                      <account.icon className="w-4 h-4" style={{ color: colors.primary }} />
                     </div>
-                    <div className="flex-1 text-left">
-                      <p className="font-semibold" style={{ color: colors.text }}>{account.label} View</p>
-                      <p className="text-sm" style={{ color: colors.textMuted }}>{account.email}</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold" style={{ color: colors.text }}>{account.label}</p>
+                      <p className="text-xs" style={{ color: colors.textMuted }}>{account.desc}</p>
                     </div>
-                    <ArrowRight 
-                      className="w-5 h-5 transition-transform" 
-                      style={{ 
-                        color: colors.textMuted,
-                        transform: selectedDemo === account.role ? 'translateX(4px)' : 'none'
-                      }} 
-                    />
+                    <ArrowRight className="w-4 h-4 flex-shrink-0" style={{ color: colors.textMuted }} />
                   </button>
                 ))}
-                
-                <div className="mt-6 pt-6 border-t" style={{ borderColor: `${colors.secondary}15` }}>
-                  <p className="text-sm text-center mb-4" style={{ color: colors.textMuted }}>
-                    All demo accounts use password: <span className="font-mono font-medium" style={{ color: colors.text }}>demo123</span>
-                  </p>
-                  <Link
-                    href="/login"
-                    className="block w-full text-center py-2.5 rounded-lg font-medium border transition-colors"
-                    style={{ 
-                      borderColor: `${colors.secondary}30`,
-                      color: colors.text,
-                    }}
-                  >
-                    Back to Login
-                  </Link>
-                </div>
               </div>
-            ) : showReset ? (
-              <form onSubmit={handleResetPassword} className="space-y-5">
-                <Input
-                  label="Email address"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder="you@example.com"
-                  helperText={resetSent ? 'If an account exists for this email, the recovery link is on its way.' : 'Use the email address you normally sign in with.'}
-                  leftIcon={<User className="w-5 h-5" />}
-                />
-
+              {(email || password) && (
                 <Button
                   type="submit"
                   className="w-full"
                   isLoading={isLoading}
-                  style={{ backgroundColor: colors.primary }}
+                  style={{ backgroundColor: colors.secondary }}
                 >
-                  {resetSent ? 'Send another reset link' : 'Send reset link'}
+                  Enter as demo user
                 </Button>
-
-                <button
-                  type="button"
-                  onClick={backToLogin}
-                  className="w-full text-center py-2.5 rounded-lg font-medium border transition-colors"
-                  style={{
-                    borderColor: `${colors.secondary}30`,
-                    color: colors.text,
-                  }}
-                >
-                  Back to sign in
-                </button>
-              </form>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <Input
-                  label="Email address"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder="you@example.com"
-                  leftIcon={<User className="w-5 h-5" />}
-                />
-
-                <div>
-                  <Input
-                    label="Password"
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    placeholder="••••••••"
-                    rightIcon={
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="hover:opacity-70 transition-opacity"
-                        aria-label={showPassword ? 'Hide password' : 'Show password'}
-                        style={{ color: colors.textMuted }}
-                      >
-                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
-                    }
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      className="w-4 h-4 rounded border-slate-300"
-                      style={{ accentColor: colors.primary }}
-                    />
-                    <span className="text-sm" style={{ color: colors.textMuted }}>Remember me</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={openReset}
-                    className="text-sm font-medium hover:underline"
-                    style={{ color: colors.primary }}
-                  >
-                    Forgot password?
-                  </button>
-                </div>
-
-                <Button
-                  type="submit"
-                  className="w-full"
-                  isLoading={isLoading}
-                  style={{ backgroundColor: colors.primary }}
-                >
-                  Sign in
-                </Button>
-
-                <p className="text-center text-sm mt-6" style={{ color: colors.textMuted }}>
-                  Don&apos;t have an account?{' '}
-                  <Link href="/signup" className="font-medium hover:underline" style={{ color: colors.primary }}>
-                    Create account
-                  </Link>
-                </p>
-
-                <div className="relative my-6">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t" style={{ borderColor: `${colors.secondary}20` }}></div>
-                  </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-white" style={{ color: colors.textMuted }}>Or try demo</span>
-                  </div>
-                </div>
-
-                <div className="rounded-xl border-2 border-dashed p-4 space-y-2" style={{ borderColor: `${colors.secondary}25`, backgroundColor: `${colors.primary}04` }}>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-center mb-3" style={{ color: colors.textMuted }}>Quick Demo Access</p>
-                  {demoAccounts.map((account) => (
-                    <button
-                      key={account.role}
-                      type="button"
-                      onClick={() => { setEmail(account.email); setPassword('demo123'); }}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all hover:shadow-sm text-left"
-                      style={{ borderColor: `${colors.secondary}20`, backgroundColor: 'white' }}
-                    >
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${colors.primary}15` }}>
-                        <account.icon className="w-4 h-4" style={{ color: colors.primary }} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold" style={{ color: colors.text }}>{account.label}</p>
-                        <p className="text-xs" style={{ color: colors.textMuted }}>{account.desc}</p>
-                      </div>
-                      <ArrowRight className="w-4 h-4 flex-shrink-0" style={{ color: colors.textMuted }} />
-                    </button>
-                  ))}
-                </div>
-              </form>
-            )}
+              )}
+            </form>
           </div>
         </div>
       </div>

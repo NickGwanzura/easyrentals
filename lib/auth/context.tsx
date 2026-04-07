@@ -1,11 +1,10 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { UserRole, AuthState } from '@/types';
+import { useUser as useAuth0User } from '@auth0/nextjs-auth0/client';
 import { useRouter, usePathname } from 'next/navigation';
+import { UserRole, AuthState } from '@/types';
 import { validateDemoCredentials, DEMO_CREDENTIALS } from '@/lib/mockData';
-import { getCurrentUser, signIn, signOut, onAuthStateChange } from '@/lib/supabase/auth';
-import { getUserCompanies } from '@/lib/whitelabel/company-service';
 
 interface CompanyInfo {
   id: string;
@@ -29,7 +28,7 @@ interface AuthContextType extends AuthState {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const PUBLIC_PATHS = ['/login', '/auth/callback', '/signup', '/signup/company', '/'];
+const PUBLIC_PATHS = ['/login', '/auth', '/signup', '/'];
 
 const DEMO_COMPANY: CompanyInfo = {
   id: '00000000-0000-0000-0000-000000000001',
@@ -39,269 +38,177 @@ const DEMO_COMPANY: CompanyInfo = {
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<AuthState & { isSupabaseAuth: boolean }>({
-    user: null,
-    isAuthenticated: false,
-    isLoading: true,
-    isDemoMode: false,
-    isSupabaseAuth: false,
-  });
-
-  const [currentCompany, setCurrentCompany] = useState<CompanyInfo | null>(null);
-  const [userCompanies, setUserCompanies] = useState<CompanyInfo[]>([]);
-
+  const { user: auth0User, isLoading: auth0Loading } = useAuth0User();
   const router = useRouter();
   const pathname = usePathname();
 
-  const loadSupabaseSession = async () => {
-    try {
-      const user = await getCurrentUser();
-      if (user) {
-        const companies = await getUserCompanies(user.id);
-        const mappedCompanies = companies.map(c => ({
-          id: c.id,
-          name: c.name,
-          slug: c.slug,
-          role: (c as any).user_role || 'admin',
-        }));
+  const [demoState, setDemoState] = useState<{
+    user: any | null;
+    isDemoMode: boolean;
+  }>({ user: null, isDemoMode: false });
 
-        setState({
-          user,
-          isAuthenticated: true,
-          isLoading: false,
-          isDemoMode: false,
-          isSupabaseAuth: true,
-        });
-        setUserCompanies(mappedCompanies);
-        setCurrentCompany(mappedCompanies[0] || null);
-        return true;
-      }
-    } catch (e) {
-      console.error('Supabase session load error:', e);
-    }
-    return false;
-  };
+  const [neonProfile, setNeonProfile] = useState<any>(null);
+  const [neonCompanies, setNeonCompanies] = useState<CompanyInfo[]>([]);
+  const [currentCompany, setCurrentCompany] = useState<CompanyInfo | null>(null);
+  const [syncing, setSyncing] = useState(false);
 
-  const loadDemoSession = () => {
+  // ── Demo mode bootstrap (localStorage) ──────────────────────────────────
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
     try {
-      const storedDemoUser = localStorage.getItem('demoUser');
+      const stored = localStorage.getItem('demoUser');
       const isDemo = localStorage.getItem('isDemoMode') === 'true';
-
-      if (storedDemoUser && isDemo) {
-        const user = JSON.parse(storedDemoUser);
-        setState({
-          user,
-          isAuthenticated: true,
-          isLoading: false,
-          isDemoMode: true,
-          isSupabaseAuth: false,
-        });
+      if (stored && isDemo) {
+        setDemoState({ user: JSON.parse(stored), isDemoMode: true });
         setCurrentCompany(DEMO_COMPANY);
-        return true;
       }
     } catch {
       // ignore
     }
-    return false;
-  };
+  }, []);
 
-  // Load auth state on mount
+  // ── Sync Auth0 user to Neon on first login ───────────────────────────────
   useEffect(() => {
-    if (typeof window === 'undefined') {
-      setState(prev => ({ ...prev, isLoading: false }));
-      return;
-    }
-
-    let isMounted = true;
-
-    (async () => {
-      const hasSupabase = await loadSupabaseSession();
-      if (!isMounted) return;
-      if (!hasSupabase) {
-        const hasDemo = loadDemoSession();
-        if (!hasDemo) {
-          setState(prev => ({ ...prev, isLoading: false }));
+    if (!auth0User || demoState.isDemoMode || syncing) return;
+    setSyncing(true);
+    fetch('/api/auth/sync', { method: 'POST' })
+      .then(r => r.json())
+      .then(({ user, companies }) => {
+        if (user) {
+          setNeonProfile(user);
+          const mapped: CompanyInfo[] = (companies || []).map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            slug: c.slug,
+            role: c.user_role || 'member',
+          }));
+          setNeonCompanies(mapped);
+          setCurrentCompany(mapped[0] ?? null);
         }
+      })
+      .catch(console.error)
+      .finally(() => setSyncing(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auth0User?.sub]);
+
+  // ── Derived state ────────────────────────────────────────────────────────
+  const isLoading = auth0Loading || (!demoState.user && !!auth0User && syncing);
+  const isDemo = demoState.isDemoMode;
+
+  const user = isDemo
+    ? demoState.user
+    : auth0User && neonProfile
+    ? {
+        id: neonProfile.id,
+        email: neonProfile.email,
+        firstName: neonProfile.first_name || '',
+        lastName: neonProfile.last_name || '',
+        role: (neonProfile.role || 'tenant') as UserRole,
+        avatar: neonProfile.avatar_url || auth0User.picture || undefined,
+        phone: neonProfile.phone || undefined,
+        createdAt: neonProfile.created_at,
+        updatedAt: neonProfile.updated_at,
       }
-    })();
+    : null;
 
-    return () => { isMounted = false; };
-  }, []);
+  const isAuthenticated = !!user;
 
-  // Listen to Supabase auth state changes
+  // ── Route protection ─────────────────────────────────────────────────────
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (isLoading) return;
+    if (!pathname) return;
 
-    const { data: { subscription } } = onAuthStateChange(async (event) => {
-      if (event === 'SIGNED_IN') {
-        await loadSupabaseSession();
-      } else if (event === 'SIGNED_OUT') {
-        localStorage.removeItem('demoUser');
-        localStorage.removeItem('isDemoMode');
-        setState({
-          user: null,
-          isAuthenticated: false,
-          isLoading: false,
-          isDemoMode: false,
-          isSupabaseAuth: false,
-        });
-        setCurrentCompany(null);
-        setUserCompanies([]);
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  // Route protection
-  useEffect(() => {
-    if (state.isLoading) return;
-    if (pathname === '/') return;
-
-    const isPublicPath = PUBLIC_PATHS.some(
-      path => pathname === path || pathname?.startsWith(path + '/')
-    );
-
-    if (!state.isAuthenticated && !isPublicPath) {
-      router.push('/login');
+    const isPublic = PUBLIC_PATHS.some(p => pathname === p || pathname.startsWith(p + '/'));
+    if (!isAuthenticated && !isPublic) {
+      router.push('/auth/login');
     }
-
-    if (state.isAuthenticated && pathname === '/login') {
+    if (isAuthenticated && (pathname === '/login' || pathname === '/')) {
       router.push('/dashboard');
     }
-  }, [state.isAuthenticated, state.isLoading, pathname, router]);
+  }, [isAuthenticated, isLoading, pathname, router]);
 
-  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    // Try Supabase auth first
-    try {
-      await signIn({ email, password });
-      const user = await getCurrentUser();
-      if (user) {
-        const companies = await getUserCompanies(user.id);
-        const mappedCompanies = companies.map(c => ({
-          id: c.id,
-          name: c.name,
-          slug: c.slug,
-          role: (c as any).user_role || 'admin',
-        }));
+  // ── Actions ──────────────────────────────────────────────────────────────
 
-        setState({
-          user,
-          isAuthenticated: true,
-          isLoading: false,
-          isDemoMode: false,
-          isSupabaseAuth: true,
-        });
-        setUserCompanies(mappedCompanies);
-        setCurrentCompany(mappedCompanies[0] || null);
-        return { success: true };
-      }
-    } catch (supabaseErr: any) {
-      // If Supabase auth fails, continue to demo fallback only if credentials match demo
-    }
-
-    // Demo fallback
+  /** For demo mode only — real users use /auth/login redirect */
+  const login = async (email: string, password: string) => {
     const demoUser = validateDemoCredentials(email, password);
     if (demoUser) {
       const isDemo = Object.values(DEMO_CREDENTIALS).some(
         (c: { email: string }) => c.email.toLowerCase() === email.toLowerCase()
       );
-
       localStorage.setItem('demoUser', JSON.stringify(demoUser));
       localStorage.setItem('isDemoMode', String(isDemo));
-
-      setState({
-        user: demoUser,
-        isAuthenticated: true,
-        isLoading: false,
-        isDemoMode: isDemo,
-        isSupabaseAuth: false,
-      });
+      setDemoState({ user: demoUser, isDemoMode: isDemo });
       setCurrentCompany(DEMO_COMPANY);
       return { success: true };
     }
-
-    return { success: false, error: 'Invalid email or password.' };
+    // Real users: redirect to Auth0
+    router.push('/auth/login');
+    return { success: true };
   };
 
   const logout = async () => {
-    if (state.isSupabaseAuth) {
-      try {
-        await signOut();
-      } catch (e) {
-        console.error('Supabase signOut error:', e);
-      }
-    }
-
     localStorage.removeItem('demoUser');
     localStorage.removeItem('isDemoMode');
-
-    setState({
-      user: null,
-      isAuthenticated: false,
-      isLoading: false,
-      isDemoMode: false,
-      isSupabaseAuth: false,
-    });
+    setDemoState({ user: null, isDemoMode: false });
+    setNeonProfile(null);
+    setNeonCompanies([]);
     setCurrentCompany(null);
-    setUserCompanies([]);
 
-    router.push('/login');
+    if (auth0User) {
+      // Auth0 logout (clears session cookie, redirects to Auth0 then back)
+      router.push('/auth/logout');
+    } else {
+      router.push('/login');
+    }
   };
 
-  const enterDemoMode = async (role: UserRole): Promise<{ success: boolean; error?: string }> => {
+  const enterDemoMode = async (role: UserRole) => {
     const emailMap: Record<string, string> = {
       admin: 'demo@admin.com',
       landlord: 'demo@landlord.com',
       agent: 'demo@agent.com',
       tenant: 'demo@tenant.com',
     };
-    return await login(emailMap[role] ?? 'demo@admin.com', 'demo123');
+    return login(emailMap[role] ?? 'demo@admin.com', 'demo123');
   };
 
-  const hasRole = (roles: UserRole[]): boolean => {
-    if (!state.user) return false;
-    return roles.includes(state.user.role);
-  };
-
-  const canAccess = (allowedRoles: UserRole[]): boolean => {
-    if (!state.user) return false;
-    return allowedRoles.includes(state.user.role);
-  };
+  const hasRole = (roles: UserRole[]) => !!user && roles.includes(user.role);
+  const canAccess = (allowedRoles: UserRole[]) => !!user && allowedRoles.includes(user.role);
 
   const switchCompany = async (companyId: string) => {
-    const company = userCompanies.find(c => c.id === companyId);
+    const company = neonCompanies.find(c => c.id === companyId);
     if (company) setCurrentCompany(company);
   };
 
   const refreshCompanies = async () => {
-    if (!state.user || state.isDemoMode) return;
-    const companies = await getUserCompanies(state.user.id);
-    const mappedCompanies = companies.map(c => ({
-      id: c.id,
-      name: c.name,
-      slug: c.slug,
-      role: (c as any).user_role || 'admin',
+    if (!auth0User || isDemo) return;
+    const r = await fetch('/api/auth/sync', { method: 'POST' });
+    const { companies } = await r.json();
+    const mapped: CompanyInfo[] = (companies || []).map((c: any) => ({
+      id: c.id, name: c.name, slug: c.slug, role: c.user_role || 'member',
     }));
-    setUserCompanies(mappedCompanies);
-    if (!currentCompany || !mappedCompanies.find(c => c.id === currentCompany.id)) {
-      setCurrentCompany(mappedCompanies[0] || null);
+    setNeonCompanies(mapped);
+    if (!currentCompany || !mapped.find(c => c.id === currentCompany.id)) {
+      setCurrentCompany(mapped[0] ?? null);
     }
   };
 
   return (
     <AuthContext.Provider
       value={{
-        ...state,
+        user,
+        isAuthenticated,
+        isLoading,
+        isDemoMode: isDemo,
+        isSupabaseAuth: false,
         login,
         logout,
         enterDemoMode,
         hasRole,
         canAccess,
         currentCompany,
-        userCompanies,
+        userCompanies: isDemo ? [DEMO_COMPANY] : neonCompanies,
         switchCompany,
         refreshCompanies,
       }}
@@ -312,11 +219,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used within an AuthProvider');
+  return ctx;
 }
 
 export function useRequireAuth(allowedRoles?: UserRole[]) {
@@ -324,10 +229,7 @@ export function useRequireAuth(allowedRoles?: UserRole[]) {
   const router = useRouter();
 
   useEffect(() => {
-    if (!auth.isLoading && !auth.isAuthenticated) {
-      router.push('/login');
-    }
-
+    if (!auth.isLoading && !auth.isAuthenticated) router.push('/auth/login');
     if (!auth.isLoading && auth.isAuthenticated && allowedRoles && !auth.canAccess(allowedRoles)) {
       router.push('/dashboard');
     }
